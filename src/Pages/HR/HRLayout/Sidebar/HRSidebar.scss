@@ -1,0 +1,563 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+    --hrms-primary: #5A67F2;
+    --hrms-primary-dark: #3D4ADB;
+    --hrms-primary-glow: rgba(90, 103, 242, 0.18);
+    --hrms-accent: #00D2C8;
+    --hrms-dark: #0D0F1A;
+    --hrms-dark-2: #13162B;
+    --hrms-border-dark: rgba(255, 255, 255, 0.07);
+    --hrms-text-white: #ffffff;
+    --hrms-text-muted-light: rgba(255, 255, 255, 0.45);
+    --hrms-text-soft: rgba(255, 255, 255, 0.7);
+    --hrms-font-head: 'Sora', sans-serif;
+    --hrms-font-body: 'DM Sans', sans-serif;
+
+    --sb-width-open: 260px;
+    --sb-width-closed: 72px;
+    --sb-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// ─── Mobile Overlay ───────────────────────────────────────────────────
+.hrs-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(13, 15, 26, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+}
+
+// ─── Sidebar Shell ────────────────────────────────────────────────────
+.hrs-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #13162B 0%, #0D0F1A 100%);
+    border-right: 1px solid var(--hrms-border-dark);
+    font-family: var(--hrms-font-body);
+    transition: width var(--sb-transition);
+    overflow: hidden;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+
+    &--open {
+        width: var(--sb-width-open);
+    }
+
+    &--closed {
+        width: var(--sb-width-closed);
+    }
+}
+
+// ─── Header ───────────────────────────────────────────────────────────
+.hrs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 16px;
+    border-bottom: 1px solid var(--hrms-border-dark);
+    min-height: 72px;
+    flex-shrink: 0;
+
+    // When closed — center the hamburger
+    .hrs-sidebar--closed & {
+        justify-content: center;
+        padding: 20px 0;
+    }
+}
+
+// ─── Brand ────────────────────────────────────────────────────────────
+.hrs-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+
+    &__icon {
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        overflow: hidden;
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    }
+
+    &__text {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: hrs-fade-in 0.2s ease both;
+    }
+
+    &__name {
+        font-family: var(--hrms-font-head);
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--hrms-text-white);
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+    }
+
+    &__sub {
+        font-size: 0.68rem;
+        color: var(--hrms-text-muted-light);
+        font-weight: 400;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+    }
+}
+
+// ─── Toggle Button ────────────────────────────────────────────────────
+.hrs-toggle {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--hrms-border-dark);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--hrms-text-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+
+    &:hover {
+        background: var(--hrms-primary-glow);
+        border-color: rgba(90, 103, 242, 0.3);
+        color: var(--hrms-text-white);
+    }
+
+    // Hamburger alone when closed — slightly bigger, no border
+    &--alone {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.06);
+        font-size: 0.9rem;
+    }
+}
+
+// ─── Nav Label ────────────────────────────────────────────────────────
+.hrs-nav-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--hrms-text-muted-light);
+    padding: 20px 20px 8px;
+    white-space: nowrap;
+    animation: hrs-fade-in 0.2s ease both;
+    flex-shrink: 0;
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────
+.hrs-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    &::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+}
+
+// ─── Nav Item ─────────────────────────────────────────────────────────
+.hrs-nav__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    margin: 2px 10px;
+    height: 48px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--hrms-text-soft);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+    overflow: hidden;
+    white-space: nowrap;
+
+    // Closed state — icon only centered
+    .hrs-sidebar--closed & {
+        justify-content: center;
+        padding: 0;
+        margin: 2px 10px;
+    }
+
+    // Hover — non-active
+    &:hover:not(.hrs-nav__item--active) {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--hrms-text-white);
+
+        .hrs-nav__icon {
+            color: var(--hrms-text-white);
+        }
+
+        .hrs-nav__arrow {
+            opacity: 0.5;
+            transform: translateX(2px);
+        }
+    }
+
+    // ── ACTIVE ────────────────────────────────────────────────────────
+    &--active {
+        background: linear-gradient(135deg, rgba(90, 103, 242, 0.22) 0%, rgba(90, 103, 242, 0.10) 100%);
+        color: var(--hrms-text-white);
+
+        .hrs-nav__icon {
+            color: var(--hrms-primary);
+            filter: drop-shadow(0 0 6px rgba(90, 103, 242, 0.6));
+        }
+
+        .hrs-nav__text {
+            font-weight: 600;
+        }
+
+        .hrs-nav__arrow {
+            opacity: 1;
+            color: var(--hrms-primary);
+            transform: translateX(0);
+        }
+
+        .hrs-nav__active-bar {
+            opacity: 1;
+            transform: translateY(-50%) scaleY(1);
+        }
+    }
+}
+
+// ─── Nav Icon ─────────────────────────────────────────────────────────
+.hrs-nav__icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    color: var(--hrms-text-muted-light);
+    transition: color 0.2s, filter 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+// ─── Nav Text ─────────────────────────────────────────────────────────
+.hrs-nav__text {
+    flex: 1;
+    animation: hrs-fade-in 0.15s ease both;
+}
+
+// ─── Arrow ────────────────────────────────────────────────────────────
+.hrs-nav__arrow {
+    font-size: 0.6rem;
+    color: transparent;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+// ─── Active Bar (left edge) ───────────────────────────────────────────
+.hrs-nav__active-bar {
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%) scaleY(0);
+    width: 3px;
+    height: 60%;
+    background: linear-gradient(180deg, var(--hrms-primary), var(--hrms-accent));
+    border-radius: 0 4px 4px 0;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+// ─── Footer ───────────────────────────────────────────────────────────
+.hrs-footer {
+    padding: 16px 12px;
+    border-top: 1px solid var(--hrms-border-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+
+    .hrs-sidebar--closed & {
+        padding: 16px 0;
+        justify-content: center;
+        flex-direction: column;
+    }
+}
+
+.hrs-footer__profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    overflow: hidden;
+    animation: hrs-fade-in 0.2s ease both;
+}
+
+.hrs-footer__avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--hrms-primary), var(--hrms-accent));
+    color: #fff;
+    font-family: var(--hrms-font-head);
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.hrs-footer__info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.hrs-footer__name {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--hrms-text-white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hrs-footer__role {
+    font-size: 0.68rem;
+    color: var(--hrms-text-muted-light);
+    white-space: nowrap;
+}
+
+// ─── Logout ───────────────────────────────────────────────────────────
+.hrs-logout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.06);
+    color: rgba(239, 68, 68, 0.75);
+    font-family: var(--hrms-font-body);
+    font-size: 0.825rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+
+    svg {
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    span {
+        animation: hrs-fade-in 0.2s ease both;
+    }
+
+    &:hover {
+        background: rgba(239, 68, 68, 0.15);
+        color: #EF4444;
+        border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    // Closed — icon only
+    .hrs-sidebar--closed & {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        justify-content: center;
+        padding: 0;
+    }
+}
+
+// ─── Animations ───────────────────────────────────────────────────────
+@keyframes hrs-fade-in {
+    from {
+        opacity: 0;
+        transform: translateX(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+// ─── TABLET ───────────────────────────────────────────────────────────
+@media (max-width: 1024px) {
+    :root {
+        --sb-width-open: 240px;
+    }
+}
+
+// ─── MOBILE ───────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+    .hrs-overlay {
+        display: block;
+    }
+
+    .hrs-sidebar {
+        &--closed {
+            width: 0;
+            border-right: none;
+            box-shadow: none;
+        }
+
+        &--open {
+            width: 260px;
+            box-shadow: 8px 0 40px rgba(0, 0, 0, 0.4);
+        }
+    }
+
+    // When open on mobile — restore normal layout
+    .hrs-sidebar--open {
+        .hrs-header {
+            justify-content: space-between;
+            padding: 20px 16px;
+        }
+
+        .hrs-nav__item {
+            justify-content: flex-start;
+            padding: 0 16px;
+        }
+
+        .hrs-footer {
+            padding: 16px 12px;
+            flex-direction: row;
+        }
+
+        .hrs-logout {
+            width: auto;
+            height: auto;
+            padding: 8px 12px;
+        }
+    }
+}
+
+// ─── Dropdown Parent Item ────────────────────────────────────────────
+.hrs-nav__item--parent {
+    cursor: pointer;
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    font-family: var(--hrms-font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--hrms-text-soft);
+
+    &.hrs-nav__item--active-parent {
+        background: linear-gradient(135deg, rgba(90, 103, 242, 0.22) 0%, rgba(90, 103, 242, 0.10) 100%);
+        color: var(--hrms-text-white);
+
+        .hrs-nav__icon {
+            color: var(--hrms-primary);
+            filter: drop-shadow(0 0 6px rgba(90, 103, 242, 0.6));
+        }
+    }
+}
+
+// ─── Chevron ──────────────────────────────────────────────────────────
+.hrs-nav__chevron {
+    font-size: 0.65rem;
+    transition: transform 0.25s ease;
+    color: var(--hrms-text-muted-light);
+    flex-shrink: 0;
+    margin-left: auto;
+
+    &--open {
+        transform: rotate(180deg);
+    }
+}
+
+// ─── Submenu ──────────────────────────────────────────────────────────
+.hrs-submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: rgba(255, 255, 255, 0.02);
+    margin: 0 10px 0 40px;
+    border-radius: 10px;
+
+    &--open {
+        max-height: 300px;
+    }
+}
+
+.hrs-submenu__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin: 4px 0;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--hrms-text-soft);
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--hrms-text-white);
+    }
+
+    &--active {
+        background: rgba(90, 103, 242, 0.15);
+        color: var(--hrms-primary);
+    }
+}
+
+.hrs-submenu__icon {
+    font-size: 0.75rem;
+    width: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.hrs-submenu__text {
+    flex: 1;
+}
+
+// ─── Closed sidebar adjustments ───────────────────────────────────────
+.hrs-sidebar--closed {
+    .hrs-nav__group {
+        position: relative;
+    }
+
+    .hrs-nav__item--parent {
+        justify-content: center;
+        padding: 0;
+    }
+
+    // Tooltip on hover for closed dropdowns
+    .hrs-nav__group:hover .hrs-nav__item--parent {
+        background: rgba(255, 255, 255, 0.08);
+    }
+}

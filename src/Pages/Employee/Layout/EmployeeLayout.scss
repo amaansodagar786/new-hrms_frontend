@@ -1,0 +1,263 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+// ─── Employee Layout ──────────────────────────────────────────────────
+.employee-layout {
+    display: flex;
+    min-height: 100vh;
+    background: #f0fdf8;
+}
+
+// ─── Main Content Area ────────────────────────────────────────────────
+.employee-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.shifted {
+        margin-left: 260px;
+    }
+
+    &.full {
+        margin-left: 72px;
+    }
+}
+
+// ─── Header ───────────────────────────────────────────────────────────
+.employee-header {
+    background: #ffffff;
+    padding: 0 2rem;
+    height: 68px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 12px rgba(16, 185, 129, 0.06);
+    position: sticky;
+    top: 0;
+    z-index: 98;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.08);
+
+    // ── Left ────────────────────────────────────────────────────────
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #64748b;
+            padding: 6px;
+            border-radius: 8px;
+            transition: background 0.2s, color 0.2s;
+
+            &:hover {
+                background: rgba(16, 185, 129, 0.08);
+                color: #10B981;
+            }
+        }
+
+        h1 {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+    }
+
+    // ── Right ───────────────────────────────────────────────────────
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+
+        .notification-btn {
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #64748b;
+            padding: 8px;
+            border-radius: 10px;
+            transition: background 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+
+            &:hover {
+                background: rgba(16, 185, 129, 0.08);
+                color: #10B981;
+            }
+
+            .notification-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                min-width: 18px;
+                height: 18px;
+                background: #ef4444;
+                color: #fff;
+                font-size: 0.6rem;
+                font-weight: 700;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 4px;
+                border: 2px solid #ffffff;
+                animation: bell-pulse 1.5s ease-in-out infinite;
+            }
+        }
+
+        .employee-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 6px 12px 6px 6px;
+            border-radius: 30px;
+            background: #F8F9FF;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+                background: rgba(16, 185, 129, 0.06);
+                border-color: #10B981;
+            }
+
+            .profile-avatar {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #10B981, #059669);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8rem;
+                font-weight: 600;
+            }
+
+            .profile-name {
+                font-family: 'DM Sans', sans-serif;
+                font-size: 0.85rem;
+                font-weight: 500;
+                color: #334155;
+                white-space: nowrap;
+            }
+        }
+    }
+}
+
+@keyframes bell-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+// ─── Page Content ─────────────────────────────────────────────────────
+.main-content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+// ─── Loading Screen ───────────────────────────────────────────────────
+.employee-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: #f0fdf8;
+    gap: 1rem;
+
+    p {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(16, 185, 129, 0.15);
+    border-top-color: #10B981;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// ─── TABLET ───────────────────────────────────────────────────────────
+@media (max-width: 1024px) {
+    .employee-main {
+        &.shifted {
+            margin-left: 240px;
+        }
+
+        &.full {
+            margin-left: 72px;
+        }
+    }
+}
+
+// ─── MOBILE ───────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+    .employee-main {
+
+        &.shifted,
+        &.full {
+            margin-left: 0;
+        }
+    }
+
+    .employee-header {
+        padding: 0 1rem;
+
+        .header-left {
+            .mobile-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .header-right {
+            .employee-profile {
+                .profile-name {
+                    display: none;
+                }
+            }
+        }
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .employee-header {
+        .header-right {
+            gap: 0.75rem;
+        }
+    }
+}

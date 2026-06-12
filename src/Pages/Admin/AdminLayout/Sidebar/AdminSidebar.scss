@@ -1,0 +1,587 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+// ─── Tokens (reuse from root if already imported) ─────────────────────
+:root {
+    --hrms-primary: #5A67F2;
+    --hrms-primary-dark: #3D4ADB;
+    --hrms-primary-glow: rgba(90, 103, 242, 0.18);
+    --hrms-accent: #00D2C8;
+    --hrms-dark: #0D0F1A;
+    --hrms-dark-2: #13162B;
+    --hrms-dark-3: #1C2040;
+    --hrms-text-white: #ffffff;
+    --hrms-text-muted-light: rgba(255, 255, 255, 0.45);
+    --hrms-text-soft: rgba(255, 255, 255, 0.7);
+    --hrms-border-dark: rgba(255, 255, 255, 0.07);
+    --hrms-font-head: 'Sora', sans-serif;
+    --hrms-font-body: 'DM Sans', sans-serif;
+
+    // Sidebar dimensions
+    --sb-width-open: 260px;
+    --sb-width-closed: 72px;
+    --sb-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// ─── Mobile overlay ───────────────────────────────────────────────────
+.as-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(13, 15, 26, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 99;
+}
+
+// ─── Sidebar Shell ────────────────────────────────────────────────────
+.as-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #13162B 0%, #0D0F1A 100%);
+    border-right: 1px solid var(--hrms-border-dark);
+    font-family: var(--hrms-font-body);
+    transition: width var(--sb-transition);
+    overflow: hidden;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+
+    &--open {
+        width: var(--sb-width-open);
+    }
+
+    &--closed {
+        width: var(--sb-width-closed);
+    }
+}
+
+// ─── Header ───────────────────────────────────────────────────────────
+.as-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 16px;
+    border-bottom: 1px solid var(--hrms-border-dark);
+    min-height: 72px;
+    flex-shrink: 0;
+}
+
+// ─── Brand ────────────────────────────────────────────────────────────
+.as-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+
+    &__icon {
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        overflow: hidden;
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    }
+
+    &__text {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: fade-in 0.2s ease both;
+    }
+
+    &__name {
+        font-family: var(--hrms-font-head);
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--hrms-text-white);
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+    }
+
+    &__sub {
+        font-size: 0.68rem;
+        color: var(--hrms-text-muted-light);
+        font-weight: 400;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+    }
+}
+
+// ─── Toggle Button ────────────────────────────────────────────────────
+.as-toggle {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--hrms-border-dark);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--hrms-text-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+
+    &:hover {
+        background: var(--hrms-primary-glow);
+        border-color: rgba(90, 103, 242, 0.3);
+        color: var(--hrms-text-white);
+    }
+}
+
+// ─── Closed state — center the toggle ─────────────────────────────────
+.as-sidebar--closed {
+    .as-header {
+        justify-content: center;
+        padding: 20px 0;
+    }
+
+    .as-nav-label {
+        display: none;
+    }
+
+    .as-nav__item {
+        justify-content: center;
+        padding: 0;
+        height: 48px;
+        margin: 2px 10px;
+        border-radius: 12px;
+    }
+
+    .as-footer {
+        padding: 16px 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        border-top: 1px solid var(--hrms-border-dark);
+    }
+
+    .as-logout {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        justify-content: center;
+        padding: 0;
+    }
+}
+
+// ─── Nav Label ────────────────────────────────────────────────────────
+.as-nav-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--hrms-text-muted-light);
+    padding: 20px 20px 8px;
+    white-space: nowrap;
+    animation: fade-in 0.2s ease both;
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────
+.as-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    // thin scrollbar
+    &::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+}
+
+// ─── Nav Item ─────────────────────────────────────────────────────────
+.as-nav__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    margin: 2px 10px;
+    height: 48px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--hrms-text-soft);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.2s ease, color 0.2s ease;
+    overflow: hidden;
+    white-space: nowrap;
+
+    // Hover state — NON active
+    &:hover:not(.as-nav__item--active) {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--hrms-text-white);
+
+        .as-nav__icon {
+            color: var(--hrms-text-white);
+        }
+
+        .as-nav__arrow {
+            opacity: 0.5;
+            transform: translateX(2px);
+        }
+    }
+
+    // ── ACTIVE STATE ──────────────────────────────────────────────────
+    &--active {
+        background: linear-gradient(135deg, rgba(90, 103, 242, 0.22) 0%, rgba(90, 103, 242, 0.10) 100%);
+        color: var(--hrms-text-white);
+
+        .as-nav__icon {
+            color: var(--hrms-primary);
+            filter: drop-shadow(0 0 6px rgba(90, 103, 242, 0.6));
+        }
+
+        .as-nav__text {
+            font-weight: 600;
+        }
+
+        .as-nav__arrow {
+            opacity: 1;
+            color: var(--hrms-primary);
+            transform: translateX(0);
+        }
+
+        // Active left bar
+        .as-nav__active-bar {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+    }
+}
+
+// ─── Nav Icon ─────────────────────────────────────────────────────────
+.as-nav__icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    color: var(--hrms-text-muted-light);
+    transition: color 0.2s, filter 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+// ─── Nav Text ─────────────────────────────────────────────────────────
+.as-nav__text {
+    flex: 1;
+    animation: fade-in 0.15s ease both;
+}
+
+// ─── Arrow ────────────────────────────────────────────────────────────
+.as-nav__arrow {
+    font-size: 0.6rem;
+    color: transparent;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+// ─── Active bar (left edge) ───────────────────────────────────────────
+.as-nav__active-bar {
+    position: absolute;
+    left: -10px; // sits at the margin edge
+    top: 50%;
+    transform: translateY(-50%) scaleY(0);
+    width: 3px;
+    height: 60%;
+    background: linear-gradient(180deg, var(--hrms-primary), var(--hrms-accent));
+    border-radius: 0 4px 4px 0;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+// ─── Footer ───────────────────────────────────────────────────────────
+.as-footer {
+    padding: 16px 12px;
+    border-top: 1px solid var(--hrms-border-dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.as-footer__profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    overflow: hidden;
+    animation: fade-in 0.2s ease both;
+}
+
+.as-footer__avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--hrms-primary), var(--hrms-accent));
+    color: #fff;
+    font-family: var(--hrms-font-head);
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.as-footer__info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.as-footer__name {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--hrms-text-white);
+    white-space: nowrap;
+}
+
+.as-footer__role {
+    font-size: 0.68rem;
+    color: var(--hrms-text-muted-light);
+    white-space: nowrap;
+}
+
+// ─── Logout ───────────────────────────────────────────────────────────
+.as-logout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.06);
+    color: rgba(239, 68, 68, 0.75);
+    font-family: var(--hrms-font-body);
+    font-size: 0.825rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+
+    &:hover {
+        background: rgba(239, 68, 68, 0.15);
+        color: #EF4444;
+        border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    svg {
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    span {
+        animation: fade-in 0.2s ease both;
+    }
+}
+
+// ─── Animations ───────────────────────────────────────────────────────
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateX(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+// ─── TABLET ───────────────────────────────────────────────────────────
+@media (max-width: 1024px) {
+    :root {
+        --sb-width-open: 240px;
+    }
+}
+
+// ─── MOBILE ───────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+    .as-overlay {
+        display: block;
+    }
+
+    .as-sidebar {
+
+        // On mobile: sidebar slides in from left
+        // Closed = completely hidden off-screen
+        &--closed {
+            width: 0;
+            border-right: none;
+            box-shadow: none;
+        }
+
+        &--open {
+            width: 260px;
+            box-shadow: 8px 0 40px rgba(0, 0, 0, 0.4);
+        }
+    }
+
+    // On mobile closed, keep items normal layout for when open
+    .as-sidebar--closed {
+        .as-header {
+            padding: 20px 16px;
+            justify-content: space-between;
+        }
+
+        .as-nav__item {
+            justify-content: flex-start;
+            padding: 0 16px;
+            margin: 2px 10px;
+        }
+
+        .as-footer {
+            padding: 16px 12px;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        .as-logout {
+            width: auto;
+            height: auto;
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+    }
+}
+
+
+// ─── Nav Group (submenu wrapper) ──────────────────────────────────────
+.as-nav__group {
+    display: flex;
+    flex-direction: column;
+}
+
+// ─── Parent trigger button ────────────────────────────────────────────
+.as-nav__item--parent {
+    width: 80%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--hrms-font-body);
+    text-align: left;
+
+    // reuse all .as-nav__item styles — it already has them via the shared class
+    // just override the arrow to use chevron-down instead
+    .as-nav__arrow {
+        display: none;
+    }
+
+    // hide right chevron for parent items
+}
+
+// ─── Chevron Down (rotates when open) ────────────────────────────────
+.as-nav__chevron {
+    font-size: 0.65rem;
+    color: var(--hrms-text-muted-light);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s;
+    flex-shrink: 0;
+    margin-left: auto;
+
+    &--open {
+        transform: rotate(180deg);
+        color: var(--hrms-primary);
+    }
+}
+
+// ─── Submenu Container ────────────────────────────────────────────────
+.as-submenu {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition:
+        max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.25s ease;
+
+    &--open {
+        max-height: 200px; // enough for 2–3 children
+        opacity: 1;
+    }
+}
+
+// ─── Submenu Item ─────────────────────────────────────────────────────
+.as-submenu__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px 9px 48px; // indented under parent
+    margin: 1px 10px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--hrms-text-muted-light);
+    font-size: 0.825rem;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+    position: relative;
+
+    // Left connector line
+    &::before {
+        content: '';
+        position: absolute;
+        left: 28px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: background 0.2s;
+    }
+
+    &:hover:not(.as-submenu__item--active) {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--hrms-text-white);
+
+        &::before {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    }
+
+    // ── Active submenu item ──────────────────────────────────────────
+    &--active {
+        background: rgba(90, 103, 242, 0.15);
+        color: var(--hrms-text-white);
+        font-weight: 600;
+
+        &::before {
+            background: var(--hrms-primary);
+            box-shadow: 0 0 6px rgba(90, 103, 242, 0.6);
+        }
+    }
+}
+
+// ─── Submenu Icon ─────────────────────────────────────────────────────
+.as-submenu__icon {
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    color: inherit;
+    opacity: 0.75;
+}
+
+.as-submenu__text {
+    font-size: 0.825rem;
+}
