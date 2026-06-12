@@ -7,7 +7,7 @@ const ManagerSalary = () => {
     <div className="manager-salary">
       <div className="manager-salary-header">
         <h1>My Salary</h1>
-        <p>View your salary details and payment history</p>
+        <p>View your salary details, payment history, and download payslips</p>
       </div>
       <EmployeeSalary />
     </div>

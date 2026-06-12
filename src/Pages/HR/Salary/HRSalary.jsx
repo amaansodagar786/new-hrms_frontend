@@ -25,9 +25,14 @@ import {
   FaPlusCircle,
   FaMinusCircle,
   FaPercentage,
-  FaRupeeSign
+  FaRupeeSign,
+  FaUser,
+  FaBriefcase,
+  FaBuilding,
+  FaIdCard
 } from 'react-icons/fa';
 import EmployeeSalary from '../../Employee/Salary/EmployeeSalary';
+import html2pdf from 'html2pdf.js';
 import './HRSalary.scss';
 
 const HRSalary = () => {
@@ -59,6 +64,11 @@ const HRSalary = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [employeeDetails, setEmployeeDetails] = useState(null);
   const [leaveUsage, setLeaveUsage] = useState(null);
+
+  // ========== PAYSLIP STATE ==========
+  const [showPayslipModal, setShowPayslipModal] = useState(false);
+  const [payslipData, setPayslipData] = useState(null);
+  const [loadingPayslip, setLoadingPayslip] = useState(false);
 
   // ========== NEW: Salary Component Selection ==========
   const [availableComponents, setAvailableComponents] = useState([]);
@@ -109,6 +119,45 @@ const HRSalary = () => {
     } finally {
       setLoadingComponents(false);
     }
+  };
+
+  // ========== PAYSLIP FUNCTIONS ==========
+  const fetchPayslip = async (employeeId, year, month, employeeName) => {
+    setLoadingPayslip(true);
+    try {
+      const response = await axios.get(`${apiUrl}/salary/payslip/${employeeId}/${year}/${month}`, {
+        withCredentials: true,
+      });
+      if (response.data.success) {
+        setPayslipData(response.data.payslip);
+        setShowPayslipModal(true);
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to fetch payslip');
+    } finally {
+      setLoadingPayslip(false);
+    }
+  };
+
+  const handleViewPayslip = (employee) => {
+    const year = filters.year;
+    const month = String(filters.month).padStart(2, '0');
+    fetchPayslip(employee.employeeId, year, month, employee.employeeName);
+  };
+
+  const handleDownloadPDF = () => {
+    const element = document.getElementById('hr-payslip-content');
+    const opt = {
+      margin: [0.5, 0.5, 0.5, 0.5],
+      filename: `Payslip_${payslipData?.employee?.name?.replace(/\s/g, '_')}_${payslipData?.salaryMonth}_${payslipData?.salaryYear}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, letterRendering: true },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+    toast.success('Payslip downloaded successfully!');
   };
 
   // Get current user ID
@@ -802,6 +851,17 @@ const HRSalary = () => {
                                 </button>
                               )}
 
+                              {/* View Payslip button - only if PAID */}
+                              {salary.status === 'PAID' && (
+                                <button
+                                  className="action-payslip"
+                                  onClick={() => handleViewPayslip(salary)}
+                                  title="View Payslip"
+                                >
+                                  <FaDownload /> Payslip
+                                </button>
+                              )}
+
                               {/* Self note for HR */}
                               {hasRecord && isSelf && salary.status !== 'PAID' && (
                                 <span className="self-note" title="HR cannot mark own salary as paid">
@@ -809,7 +869,7 @@ const HRSalary = () => {
                                 </span>
                               )}
 
-                              {/* View button */}
+                              {/* View details button */}
                               {hasRecord && (
                                 <button
                                   className="action-view"
@@ -877,7 +937,6 @@ const HRSalary = () => {
                 </div>
               ) : (
                 <>
-                  {/* Additions Section */}
                   {additionComponents.length > 0 && (
                     <div className="component-group">
                       <h4 className="component-group__title addition">
@@ -908,7 +967,6 @@ const HRSalary = () => {
                     </div>
                   )}
 
-                  {/* Deductions Section */}
                   {deductionComponents.length > 0 && (
                     <div className="component-group">
                       <h4 className="component-group__title deduction">
@@ -952,6 +1010,100 @@ const HRSalary = () => {
         </div>
       )}
 
+      {/* ========== PAYSLIP MODAL ========== */}
+      {showPayslipModal && payslipData && (
+        <div className="modal-overlay" onClick={() => setShowPayslipModal(false)}>
+          <div className="hr-payslip-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3><FaMoneyBillWave /> Payslip - {payslipData.employee?.name}</h3>
+              <button className="modal-close" onClick={() => setShowPayslipModal(false)}>
+                <FaTimesCircle />
+              </button>
+            </div>
+            <div className="modal-body">
+              {loadingPayslip ? (
+                <div className="loading-state">
+                  <div className="spinner"></div>
+                  <p>Loading payslip...</p>
+                </div>
+              ) : (
+                <div id="hr-payslip-content" className="hr-payslip-content">
+                  <div className="payslip-header">
+                    <h1>{payslipData.company?.name || 'HRMS'}</h1>
+                    <p>{payslipData.company?.address || 'Your Company Address'}</p>
+                    <p>Email: {payslipData.company?.email || 'hr@hrms.com'} | Phone: {payslipData.company?.phone || '+91 XXXXXXXXXX'}</p>
+                    <div className="payslip-title">
+                      <h2>PAYSLIP</h2>
+                      <p>For the month of {payslipData.salaryMonth} {payslipData.salaryYear}</p>
+                    </div>
+                  </div>
+
+                  <div className="payslip-section">
+                    <h4>Employee Details</h4>
+                    <div className="payslip-grid">
+                      <div className="payslip-item"><label><FaUser /> Name:</label><span>{payslipData.employee?.name}</span></div>
+                      <div className="payslip-item"><label><FaIdCard /> Employee ID:</label><span>{payslipData.employee?.employeeId}</span></div>
+                      <div className="payslip-item"><label><FaBriefcase /> Designation:</label><span>{payslipData.employee?.designation}</span></div>
+                      <div className="payslip-item"><label><FaBuilding /> Department:</label><span>{payslipData.employee?.department}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="payslip-salary">
+                    <div className="payslip-earnings">
+                      <h4>Earnings</h4>
+                      <table className="payslip-table">
+                        <tbody>
+                          <tr><td>Basic Salary</td><td>{formatCurrency(payslipData.basicSalary)}</td></tr>
+                          {payslipData.additions?.map((add, idx) => (
+                            <tr key={idx}><td>{add.name}</td><td>{formatCurrency(add.amount)}</td></tr>
+                          ))}
+                          <tr className="payslip-total"><td><strong>Total Earnings</strong></td><td><strong>{formatCurrency(payslipData.totalAdditions + payslipData.basicSalary)}</strong></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="payslip-deductions">
+                      <h4>Deductions</h4>
+                      <table className="payslip-table">
+                        <tbody>
+                          {payslipData.deductions?.map((ded, idx) => (
+                            <tr key={idx}><td>{ded.name}</td><td>{formatCurrency(ded.amount)}</td></tr>
+                          ))}
+                          <tr className="payslip-total"><td><strong>Total Deductions</strong></td><td><strong>{formatCurrency(payslipData.totalDeductions)}</strong></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="payslip-net">
+                    <div className="payslip-net-amount">
+                      <span>NET SALARY</span>
+                      <strong>{formatCurrency(payslipData.netSalary)}</strong>
+                    </div>
+                  </div>
+
+                  <div className="payslip-footer">
+                    <div className="payslip-payment">
+                      <p><strong>Payment Details:</strong></p>
+                      <p>Paid On: {new Date(payslipData.paymentInfo?.paidOn).toLocaleDateString()}</p>
+                      <p>Paid By: {payslipData.paymentInfo?.paidBy}</p>
+                    </div>
+                    <div className="payslip-note">
+                      <p>Generated on: {new Date().toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="close-btn" onClick={() => setShowPayslipModal(false)}>Close</button>
+              <button className="download-btn" onClick={handleDownloadPDF}>
+                <FaDownload /> Download PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Employee Details Modal */}
       {showDetailModal && selectedEmployee && (
         <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
@@ -968,43 +1120,19 @@ const HRSalary = () => {
               ) : employeeDetails ? (
                 <>
                   <div className="salary-summary">
-                    <div className="summary-item">
-                      <span>Basic Salary:</span>
-                      <strong>{formatCurrency(selectedEmployee.basicSalary)}</strong>
-                    </div>
-                    <div className="summary-item">
-                      <span>Gross Salary:</span>
-                      <strong>{formatCurrency(employeeDetails.grossSalary || employeeDetails.netSalary)}</strong>
-                    </div>
-                    <div className="summary-item">
-                      <span>Net Salary:</span>
-                      <strong className="net">{formatCurrency(employeeDetails.netSalary)}</strong>
-                    </div>
-                    <div className="summary-item">
-                      <span>Status:</span>
-                      {getStatusBadge(employeeDetails.status)}
-                    </div>
+                    <div className="summary-item"><span>Basic Salary:</span><strong>{formatCurrency(selectedEmployee.basicSalary)}</strong></div>
+                    <div className="summary-item"><span>Net Salary:</span><strong className="net">{formatCurrency(employeeDetails.netSalary)}</strong></div>
+                    <div className="summary-item"><span>Status:</span>{getStatusBadge(employeeDetails.status)}</div>
                   </div>
 
-                  {/* Used Components Section */}
                   {employeeDetails.usedComponents && employeeDetails.usedComponents.length > 0 && (
                     <div className="detail-section">
                       <h4>Salary Components Used</h4>
                       <div className="components-used-grid">
                         {employeeDetails.usedComponents.map((comp, idx) => (
                           <div key={idx} className={`component-used-item ${comp.type}`}>
-                            <div className="component-used-info">
-                              <strong>{comp.name}</strong>
-                              <span className="component-used-code">{comp.code}</span>
-                              {comp.calculationType === 'percentage' ? (
-                                <small>({comp.value}% of basic)</small>
-                              ) : (
-                                <small>(Fixed)</small>
-                              )}
-                            </div>
-                            <div className="component-used-amount">
-                              {comp.type === 'addition' ? '+' : '-'} {formatCurrency(comp.amount)}
-                            </div>
+                            <div className="component-used-info"><strong>{comp.name}</strong><span className="component-used-code">{comp.code}</span></div>
+                            <div className="component-used-amount">{comp.type === 'addition' ? '+' : '-'} {formatCurrency(comp.amount)}</div>
                           </div>
                         ))}
                       </div>
@@ -1014,35 +1142,23 @@ const HRSalary = () => {
                   <div className="detail-section">
                     <h4>Attendance Summary</h4>
                     <div className="detail-grid">
-                      <div><span>Working Days:</span> <strong>{employeeDetails.attendanceSummary?.totalWorkingDays || 0}</strong></div>
-                      <div><span>Present:</span> <strong>{employeeDetails.attendanceSummary?.presentDays || 0}</strong></div>
-                      <div><span>Late:</span> <strong>{employeeDetails.attendanceSummary?.lateDays || 0}</strong></div>
-                      <div><span>Half Day:</span> <strong>{employeeDetails.attendanceSummary?.halfDays || 0}</strong></div>
-                      <div><span>Absent:</span> <strong>{employeeDetails.attendanceSummary?.absentDays || 0}</strong></div>
-                      <div><span>Unpaid Leave:</span> <strong>{employeeDetails.attendanceSummary?.unpaidLeaveDays || 0}</strong></div>
-                    </div>
-                  </div>
-
-                  <div className="detail-section">
-                    <h4>Leave Usage</h4>
-                    <div className="leave-grid">
-                      <div><span>Casual Leave:</span> <strong>{leaveUsage?.CL?.taken || 0} days</strong></div>
-                      <div><span>Sick Leave:</span> <strong>{leaveUsage?.SL?.taken || 0} days</strong></div>
-                      <div><span>Paid Leave:</span> <strong>{leaveUsage?.PL?.taken || 0} days</strong></div>
-                      <div><span>Earned Leave:</span> <strong>{leaveUsage?.EL?.taken || 0} days</strong></div>
-                      <div><span>Unpaid Leave:</span> <strong className="warning">{leaveUsage?.LOP?.taken || 0} days</strong></div>
+                      <div><span>Working Days:</span><strong>{employeeDetails.attendanceSummary?.totalWorkingDays || 0}</strong></div>
+                      <div><span>Present:</span><strong>{employeeDetails.attendanceSummary?.presentDays || 0}</strong></div>
+                      <div><span>Late:</span><strong>{employeeDetails.attendanceSummary?.lateDays || 0}</strong></div>
+                      <div><span>Half Day:</span><strong>{employeeDetails.attendanceSummary?.halfDays || 0}</strong></div>
+                      <div><span>Absent:</span><strong>{employeeDetails.attendanceSummary?.absentDays || 0}</strong></div>
+                      <div><span>Unpaid Leave:</span><strong>{employeeDetails.attendanceSummary?.unpaidLeaveDays || 0}</strong></div>
                     </div>
                   </div>
 
                   <div className="detail-section">
                     <h4>Deductions</h4>
                     <div className="detail-grid">
-                      <div><span>Late Deduction:</span> <strong>{formatCurrency(employeeDetails.lateDeduction || 0)}</strong></div>
-                      <div><span>Half Day Deduction:</span> <strong>{formatCurrency(employeeDetails.halfDayDeduction || 0)}</strong></div>
-                      <div><span>Absent Deduction:</span> <strong>{formatCurrency(employeeDetails.absentDeduction || 0)}</strong></div>
-                      <div><span>Leave Deduction:</span> <strong>{formatCurrency(employeeDetails.leaveDeduction || 0)}</strong></div>
-                      <div><span>Component Deductions:</span> <strong>{formatCurrency(employeeDetails.totalDeductionsFromComponents || 0)}</strong></div>
-                      <div><span>Total Deductions:</span> <strong className="deduction">{formatCurrency(employeeDetails.totalDeductions || 0)}</strong></div>
+                      <div><span>Late Deduction:</span><strong>{formatCurrency(employeeDetails.lateDeduction || 0)}</strong></div>
+                      <div><span>Half Day Deduction:</span><strong>{formatCurrency(employeeDetails.halfDayDeduction || 0)}</strong></div>
+                      <div><span>Absent Deduction:</span><strong>{formatCurrency(employeeDetails.absentDeduction || 0)}</strong></div>
+                      <div><span>Leave Deduction:</span><strong>{formatCurrency(employeeDetails.leaveDeduction || 0)}</strong></div>
+                      <div><span>Total Deductions:</span><strong className="deduction">{formatCurrency(employeeDetails.totalDeductions || 0)}</strong></div>
                     </div>
                   </div>
 
@@ -1050,8 +1166,8 @@ const HRSalary = () => {
                     <div className="detail-section">
                       <h4>Payment Info</h4>
                       <div className="detail-grid">
-                        <div><span>Paid On:</span> <strong>{new Date(employeeDetails.paidAt).toLocaleDateString()}</strong></div>
-                        <div><span>Paid By:</span> <strong>{employeeDetails.paidByName || 'HR/Admin'}</strong></div>
+                        <div><span>Paid On:</span><strong>{new Date(employeeDetails.paidAt).toLocaleDateString()}</strong></div>
+                        <div><span>Paid By:</span><strong>{employeeDetails.paidByName || 'HR/Admin'}</strong></div>
                       </div>
                     </div>
                   )}
@@ -1072,24 +1188,16 @@ const HRSalary = () => {
         <div className="modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
           <div className={`confirm-modal confirm-modal--${confirmModal.type}`} onClick={(e) => e.stopPropagation()}>
             <div className="confirm-modal__header">
-              <div className="confirm-modal__icon">
-                <FaExclamationTriangle />
-              </div>
-              <button className="confirm-modal__close" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
-                <FaTimesCircle />
-              </button>
+              <div className="confirm-modal__icon"><FaExclamationTriangle /></div>
+              <button className="confirm-modal__close" onClick={() => setConfirmModal({ ...confirmModal, show: false })}><FaTimesCircle /></button>
             </div>
             <div className="confirm-modal__body">
               <h3>{confirmModal.title}</h3>
               <p>{confirmModal.message}</p>
             </div>
             <div className="confirm-modal__footer">
-              <button className="confirm-modal__cancel" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
-                {confirmModal.cancelText}
-              </button>
-              <button className="confirm-modal__confirm" onClick={confirmModal.onConfirm}>
-                {confirmModal.confirmText}
-              </button>
+              <button className="confirm-modal__cancel" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>{confirmModal.cancelText}</button>
+              <button className="confirm-modal__confirm" onClick={confirmModal.onConfirm}>{confirmModal.confirmText}</button>
             </div>
           </div>
         </div>
