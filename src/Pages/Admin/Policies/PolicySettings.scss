@@ -947,3 +947,97 @@
         padding: 16px 12px;
     }
 }
+
+
+// ─── Salary Components Specific Styles ───────────────────────────────
+.ps-card__icon--gold {
+    background: rgba(245, 158, 11, 0.1);
+    color: #D97706;
+}
+
+.ps-table--salary {
+    min-width: 800px;
+}
+
+.ps-order-cell {
+    width: 50px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--hrms-text-muted);
+}
+
+.ps-calc-cell {
+    font-size: 0.8rem;
+    color: var(--hrms-text-secondary);
+}
+
+.ps-value-cell {
+    font-weight: 600;
+}
+
+.ps-badge--addition {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+}
+
+.ps-badge--deduction {
+    background: rgba(239, 68, 68, 0.1);
+    color: #DC2626;
+}
+
+.ps-calc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: rgba(90, 103, 242, 0.08);
+    font-size: 0.75rem;
+    font-weight: 600;
+
+    svg {
+        font-size: 0.7rem;
+    }
+}
+
+.ps-card__footer--info {
+    background: #F8F9FF;
+    justify-content: flex-start;
+
+    .ps-info-text {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        color: var(--hrms-text-secondary);
+
+        svg {
+            color: var(--hrms-success);
+            font-size: 0.9rem;
+        }
+    }
+}
+
+// ─── Role Chip Enhancements ──────────────────────────────────────────
+.ps-role-chip {
+    svg {
+        font-size: 0.75rem;
+    }
+}
+
+// ─── Responsive for Salary Table ─────────────────────────────────────
+@media (max-width: 768px) {
+    .ps-table--salary {
+        min-width: 700px;
+    }
+
+    .ps-calc-cell,
+    .ps-value-cell {
+        font-size: 0.75rem;
+    }
+
+    .ps-calc-badge {
+        padding: 2px 8px;
+        font-size: 0.7rem;
+    }
+}

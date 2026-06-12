@@ -5,7 +5,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import {
     FaClock, FaCalendarAlt, FaPlus, FaEdit, FaTrash,
     FaTimes, FaSave, FaExclamationTriangle, FaRegCalendarAlt,
-    FaBriefcase, FaUserTie, FaUsers, FaShieldAlt
+    FaBriefcase, FaUserTie, FaUsers, FaShieldAlt,
+    FaMoneyBillWave, FaArrowUp, FaArrowDown, FaPercentage,
+    FaRupeeSign, FaDollarSign, FaSort, FaCheckCircle
 } from 'react-icons/fa';
 import './PolicySettings.scss';
 
@@ -38,6 +40,15 @@ const PolicySettings = () => {
         applicableRoles: ['HR', 'MANAGER', 'EMPLOYEE']
     });
 
+    // ========== SALARY COMPONENTS STATE ==========
+    const [salaryComponents, setSalaryComponents] = useState([]);
+    const [showSalaryModal, setShowSalaryModal] = useState(false);
+    const [editingSalary, setEditingSalary] = useState(null);
+    const [salaryForm, setSalaryForm] = useState({
+        name: '', code: '', type: 'addition', calculationType: 'percentage',
+        value: '', description: '', order: 0
+    });
+
     const [confirmModal, setConfirmModal] = useState({
         show: false, title: '', message: '', onConfirm: null
     });
@@ -53,6 +64,7 @@ const PolicySettings = () => {
                 setAttendanceRules(response.data.policy.attendanceRules || attendanceRules);
                 setHolidays(response.data.policy.holidays || []);
                 setLeaveTypes(response.data.policy.leaveTypes || []);
+                setSalaryComponents(response.data.policy.salaryComponents || []);
             }
         } catch { toast.error('Failed to fetch policy data'); }
         finally { setLoading(false); }
@@ -60,6 +72,7 @@ const PolicySettings = () => {
 
     useEffect(() => { fetchPolicy(); }, []);
 
+    // ========== ATTENDANCE RULES HANDLERS ==========
     const handleUpdateAttendanceRules = async () => {
         try {
             const response = await axios.put(`${apiUrl}/policies/attendance-rules`, attendanceRules, { withCredentials: true });
@@ -67,6 +80,7 @@ const PolicySettings = () => {
         } catch (error) { toast.error(error.response?.data?.message || 'Failed to update attendance rules'); }
     };
 
+    // ========== HOLIDAY HANDLERS ==========
     const handleAddHoliday = () => {
         setEditingHoliday(null);
         setHolidayForm({ name: '', type: 'public', date: '', startDate: '', endDate: '', isRange: false, description: '' });
@@ -110,6 +124,7 @@ const PolicySettings = () => {
         });
     };
 
+    // ========== LEAVE TYPE HANDLERS ==========
     const handleAddLeaveType = () => {
         setEditingLeave(null);
         setLeaveForm({ name: '', code: '', description: '', yearlyLimit: '', minDaysToApply: 1, maxDaysAtOnce: 5, applicableRoles: ['HR', 'MANAGER', 'EMPLOYEE'] });
@@ -152,6 +167,62 @@ const PolicySettings = () => {
         });
     };
 
+    // ========== SALARY COMPONENTS HANDLERS ==========
+    const handleAddSalaryComponent = () => {
+        setEditingSalary(null);
+        setSalaryForm({
+            name: '', code: '', type: 'addition', calculationType: 'percentage',
+            value: '', description: '', order: salaryComponents.length
+        });
+        setShowSalaryModal(true);
+    };
+
+    const handleEditSalaryComponent = (component) => {
+        setEditingSalary(component);
+        setSalaryForm({
+            name: component.name,
+            code: component.code,
+            type: component.type,
+            calculationType: component.calculationType,
+            value: component.value,
+            description: component.description || '',
+            order: component.order || 0
+        });
+        setShowSalaryModal(true);
+    };
+
+    const handleSaveSalaryComponent = async () => {
+        if (!salaryForm.name || !salaryForm.code || !salaryForm.value) {
+            toast.error('Please fill all required fields');
+            return;
+        }
+
+        try {
+            if (editingSalary) {
+                const res = await axios.put(`${apiUrl}/policies/salary-components/${editingSalary.code}`, salaryForm, { withCredentials: true });
+                if (res.data.success) { toast.success('Salary component updated'); fetchPolicy(); setShowSalaryModal(false); }
+            } else {
+                const res = await axios.post(`${apiUrl}/policies/salary-components`, salaryForm, { withCredentials: true });
+                if (res.data.success) { toast.success('Salary component added'); fetchPolicy(); setShowSalaryModal(false); }
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to save salary component');
+        }
+    };
+
+    const handleDeleteSalaryComponent = (component) => {
+        setConfirmModal({
+            show: true, title: 'Delete Salary Component',
+            message: `Are you sure you want to delete "${component.name}" (${component.code})?`,
+            onConfirm: async () => {
+                try {
+                    const res = await axios.delete(`${apiUrl}/policies/salary-components/${component.code}`, { withCredentials: true });
+                    if (res.data.success) { toast.success('Salary component disabled'); fetchPolicy(); setConfirmModal({ show: false, title: '', message: '', onConfirm: null }); }
+                } catch (error) { toast.error(error.response?.data?.message || 'Failed to delete salary component'); }
+            }
+        });
+    };
+
     const toggleRole = (role) => {
         setLeaveForm({
             ...leaveForm,
@@ -177,10 +248,25 @@ const PolicySettings = () => {
         return rules[rule] || rule;
     };
 
+    const getComponentTypeBadge = (type) => {
+        if (type === 'addition') {
+            return <span className="ps-badge ps-badge--addition">Addition</span>;
+        }
+        return <span className="ps-badge ps-badge--deduction">Deduction</span>;
+    };
+
+    const getComponentCalcBadge = (calcType, value) => {
+        if (calcType === 'percentage') {
+            return <span className="ps-calc-badge"><FaPercentage /> {value}%</span>;
+        }
+        return <span className="ps-calc-badge"><FaRupeeSign /> {value.toLocaleString()}</span>;
+    };
+
     const tabs = [
         { key: 'attendance', label: 'Attendance Rules', icon: <FaClock /> },
         { key: 'holidays', label: 'Holidays', icon: <FaCalendarAlt /> },
         { key: 'leavetypes', label: 'Leave Types', icon: <FaBriefcase /> },
+        { key: 'salary', label: 'Salary Components', icon: <FaMoneyBillWave /> }
     ];
 
     const holidayTypeConfig = {
@@ -208,7 +294,7 @@ const PolicySettings = () => {
                         <FaShieldAlt /> Policies
                     </span>
                     <h1>Policy Settings</h1>
-                    <p>Manage company policies, attendance rules, holidays, and leave types</p>
+                    <p>Manage company policies, attendance rules, holidays, leave types and salary components</p>
                 </div>
             </div>
 
@@ -428,6 +514,78 @@ const PolicySettings = () => {
                 </div>
             )}
 
+            {/* ── SALARY COMPONENTS TAB ───────────────────────────── */}
+            {activeTab === 'salary' && (
+                <div className="ps-card">
+                    <div className="ps-card__header">
+                        <div className="ps-card__title-wrap">
+                            <div className="ps-card__icon ps-card__icon--gold"><FaMoneyBillWave /></div>
+                            <div>
+                                <h3>Salary Components</h3>
+                                <p>Configure additions (HRA, DA, etc.) and deductions (PF, PT, etc.) for salary calculation</p>
+                            </div>
+                        </div>
+                        <button onClick={handleAddSalaryComponent} className="ps-btn ps-btn--primary">
+                            <FaPlus /> Add Component
+                        </button>
+                    </div>
+
+                    {salaryComponents.filter(sc => sc.isActive !== false).length === 0 ? (
+                        <div className="ps-empty">
+                            <div className="ps-empty__icon"><FaMoneyBillWave /></div>
+                            <p>No salary components configured yet.</p>
+                            <span>Click "Add Component" to create additions or deductions</span>
+                        </div>
+                    ) : (
+                        <div className="ps-table-wrap">
+                            <table className="ps-table ps-table--salary">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Name</th>
+                                        <th>Code</th>
+                                        <th>Type</th>
+                                        <th>Calculation</th>
+                                        <th>Value</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {salaryComponents
+                                        .filter(sc => sc.isActive !== false)
+                                        .sort((a, b) => (a.order || 0) - (b.order || 0))
+                                        .map((component, idx) => (
+                                            <tr key={component._id || component.code}>
+                                                <td className="ps-order-cell">{idx + 1}</td>
+                                                <td className="ps-name-cell">
+                                                    <span className="ps-name-cell__name">{component.name}</span>
+                                                    {component.description && <span className="ps-name-cell__sub">{component.description}</span>}
+                                                </td>
+                                                <td><span className="ps-code-badge">{component.code}</span></td>
+                                                <td>{getComponentTypeBadge(component.type)}</td>
+                                                <td className="ps-calc-cell">{component.calculationType === 'percentage' ? 'Percentage of Basic' : 'Fixed Amount'}</td>
+                                                <td className="ps-value-cell">{getComponentCalcBadge(component.calculationType, component.value)}</td>
+                                                <td>
+                                                    <div className="ps-row-actions">
+                                                        <button className="ps-btn-icon ps-btn-icon--edit" onClick={() => handleEditSalaryComponent(component)}><FaEdit /></button>
+                                                        <button className="ps-btn-icon ps-btn-icon--delete" onClick={() => handleDeleteSalaryComponent(component)}><FaTrash /></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    <div className="ps-card__footer ps-card__footer--info">
+                        <div className="ps-info-text">
+                            <FaCheckCircle /> Basic salary is taken from employee profile. These components are additional earnings/deductions.
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* ── HOLIDAY MODAL ──────────────────────────────────── */}
             {showHolidayModal && (
                 <div className="ps-overlay" onClick={() => setShowHolidayModal(false)}>
@@ -557,6 +715,74 @@ const PolicySettings = () => {
                             <button className="ps-btn ps-btn--ghost" onClick={() => setShowLeaveModal(false)}>Cancel</button>
                             <button className="ps-btn ps-btn--primary" onClick={handleSaveLeaveType}>
                                 <FaSave /> {editingLeave ? 'Update' : 'Add'} Leave Type
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── SALARY COMPONENT MODAL ─────────────────────────── */}
+            {showSalaryModal && (
+                <div className="ps-overlay" onClick={() => setShowSalaryModal(false)}>
+                    <div className="ps-modal ps-modal--lg" onClick={(e) => e.stopPropagation()}>
+                        <div className="ps-modal__header">
+                            <h3>{editingSalary ? 'Edit Salary Component' : 'Add Salary Component'}</h3>
+                            <button className="ps-modal__close" onClick={() => setShowSalaryModal(false)}><FaTimes /></button>
+                        </div>
+                        <div className="ps-modal__body">
+                            <div className="ps-field">
+                                <label>Component Name <span className="ps-req">*</span></label>
+                                <input type="text" value={salaryForm.name}
+                                    onChange={(e) => setSalaryForm({ ...salaryForm, name: e.target.value })}
+                                    placeholder="e.g., House Rent Allowance, Provident Fund" />
+                            </div>
+                            <div className="ps-field">
+                                <label>Component Code <span className="ps-req">*</span></label>
+                                <input type="text" value={salaryForm.code} disabled={!!editingSalary}
+                                    onChange={(e) => setSalaryForm({ ...salaryForm, code: e.target.value.toUpperCase() })}
+                                    placeholder="e.g., HRA, DA, PF, PT" />
+                                <small>Unique identifier — cannot edit after creation</small>
+                            </div>
+                            <div className="ps-field-row">
+                                <div className="ps-field">
+                                    <label>Type <span className="ps-req">*</span></label>
+                                    <select value={salaryForm.type}
+                                        onChange={(e) => setSalaryForm({ ...salaryForm, type: e.target.value })}>
+                                        <option value="addition">Addition (Earning)</option>
+                                        <option value="deduction">Deduction</option>
+                                    </select>
+                                </div>
+                                <div className="ps-field">
+                                    <label>Calculation Type <span className="ps-req">*</span></label>
+                                    <select value={salaryForm.calculationType}
+                                        onChange={(e) => setSalaryForm({ ...salaryForm, calculationType: e.target.value })}>
+                                        <option value="percentage">Percentage of Basic Salary</option>
+                                        <option value="fixed">Fixed Amount</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="ps-field">
+                                <label>Value <span className="ps-req">*</span></label>
+                                <input type="number" value={salaryForm.value}
+                                    onChange={(e) => setSalaryForm({ ...salaryForm, value: e.target.value })}
+                                    placeholder={salaryForm.calculationType === 'percentage' ? 'e.g., 40 for 40%' : 'e.g., 5000 for ₹5,000'} />
+                                <small>
+                                    {salaryForm.calculationType === 'percentage'
+                                        ? 'Percentage of employee\'s basic salary'
+                                        : 'Fixed amount in Rupees'}
+                                </small>
+                            </div>
+                            <div className="ps-field">
+                                <label>Description <span className="ps-optional">(optional)</span></label>
+                                <textarea value={salaryForm.description} rows="2"
+                                    onChange={(e) => setSalaryForm({ ...salaryForm, description: e.target.value })}
+                                    placeholder="Describe what this component is for" />
+                            </div>
+                        </div>
+                        <div className="ps-modal__footer">
+                            <button className="ps-btn ps-btn--ghost" onClick={() => setShowSalaryModal(false)}>Cancel</button>
+                            <button className="ps-btn ps-btn--primary" onClick={handleSaveSalaryComponent}>
+                                <FaSave /> {editingSalary ? 'Update' : 'Add'} Component
                             </button>
                         </div>
                     </div>
