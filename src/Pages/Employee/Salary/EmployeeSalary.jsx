@@ -16,8 +16,18 @@ import {
     FaCalendarCheck,
     FaClock as FaLateIcon,
     FaChevronDown,
-    FaChevronUp
+    FaChevronUp,
+    FaEye,
+    FaUser,
+    FaBriefcase,
+    FaBuilding,
+    FaIdCard,
+    FaRupeeSign,
+    FaPercentage,
+    FaPlusCircle,
+    FaMinusCircle
 } from 'react-icons/fa';
+import html2pdf from 'html2pdf.js';
 import './EmployeeSalary.scss';
 
 const EmployeeSalary = () => {
@@ -31,6 +41,12 @@ const EmployeeSalary = () => {
     const [expandedHistory, setExpandedHistory] = useState(null);
     const [leaveUsage, setLeaveUsage] = useState(null);
     const [leaveBalance, setLeaveBalance] = useState(null);
+
+    // ========== PAYSLIP STATE ==========
+    const [showPayslipModal, setShowPayslipModal] = useState(false);
+    const [selectedPayslip, setSelectedPayslip] = useState(null);
+    const [payslipData, setPayslipData] = useState(null);
+    const [loadingPayslip, setLoadingPayslip] = useState(false);
 
     const apiUrl = import.meta.env.VITE_API_URL;
     const currentDate = new Date();
@@ -67,7 +83,7 @@ const EmployeeSalary = () => {
         }
     };
 
-    // Fetch leave usage for current month (ALWAYS)
+    // Fetch leave usage for current month
     const fetchLeaveUsage = async () => {
         try {
             const response = await axios.get(`${apiUrl}/leave/usage/${currentYear}/${currentMonth}`, {
@@ -82,13 +98,52 @@ const EmployeeSalary = () => {
         }
     };
 
+    // ========== PAYSLIP FUNCTIONS ==========
+    const fetchPayslip = async (year, month) => {
+        setLoadingPayslip(true);
+        try {
+            const response = await axios.get(`${apiUrl}/salary/payslip/self/${year}/${month}`, {
+                withCredentials: true,
+            });
+            if (response.data.success) {
+                setPayslipData(response.data.payslip);
+                setShowPayslipModal(true);
+            } else {
+                toast.error(response.data.message);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to fetch payslip');
+        } finally {
+            setLoadingPayslip(false);
+        }
+    };
+
+    const handleViewPayslip = (record) => {
+        const year = record.year;
+        const month = record.month.split('-')[1];
+        fetchPayslip(year, month);
+    };
+
+    const handleDownloadPDF = () => {
+        const element = document.getElementById('payslip-content');
+        const opt = {
+            margin: [0.5, 0.5, 0.5, 0.5],
+            filename: `Payslip_${payslipData?.employee?.name?.replace(/\s/g, '_')}_${payslipData?.salaryMonth}_${payslipData?.salaryYear}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, letterRendering: true },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+        toast.success('Payslip downloaded successfully!');
+    };
+
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
             await Promise.all([
                 fetchCurrentSalary(),
                 fetchSalaryHistory(1),
-                fetchLeaveUsage(), // Always fetch leave usage
+                fetchLeaveUsage(),
             ]);
             setLoading(false);
         };
@@ -113,7 +168,7 @@ const EmployeeSalary = () => {
             currency: 'INR',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
-        }).format(amount);
+        }).format(amount || 0);
     };
 
     // Get status badge
@@ -148,7 +203,7 @@ const EmployeeSalary = () => {
             {/* Header */}
             <div className="salary-header">
                 <h1><FaMoneyBillWave /> My Salary</h1>
-                <p>View your salary details and payment history</p>
+                <p>View your salary details, payment history, and download payslips</p>
             </div>
 
             {/* Current Month Salary Card */}
@@ -256,11 +311,10 @@ const EmployeeSalary = () => {
                     </div>
                 )}
 
-                {/* Leave Usage Section - ALWAYS VISIBLE (even if salary not calculated) */}
+                {/* Leave Usage Section */}
                 <div className="leave-usage-section">
                     <h3>Leave Usage for {currentMonthName} {currentYear}</h3>
                     <div className="leave-usage-grid">
-                        {/* Casual Leave */}
                         <div className="leave-item">
                             <div className="leave-header">
                                 <span className="leave-name">Casual Leave (CL)</span>
@@ -272,7 +326,6 @@ const EmployeeSalary = () => {
                             )}
                         </div>
 
-                        {/* Sick Leave */}
                         <div className="leave-item">
                             <div className="leave-header">
                                 <span className="leave-name">Sick Leave (SL)</span>
@@ -284,7 +337,6 @@ const EmployeeSalary = () => {
                             )}
                         </div>
 
-                        {/* Paid Leave */}
                         <div className="leave-item">
                             <div className="leave-header">
                                 <span className="leave-name">Paid Leave (PL)</span>
@@ -296,7 +348,6 @@ const EmployeeSalary = () => {
                             )}
                         </div>
 
-                        {/* Earned Leave */}
                         <div className="leave-item">
                             <div className="leave-header">
                                 <span className="leave-name">Earned Leave (EL)</span>
@@ -308,7 +359,6 @@ const EmployeeSalary = () => {
                             )}
                         </div>
 
-                        {/* Unpaid Leave */}
                         <div className="leave-item warning">
                             <div className="leave-header">
                                 <span className="leave-name">Unpaid Leave (LOP)</span>
@@ -327,9 +377,23 @@ const EmployeeSalary = () => {
 
                 {/* Action Buttons */}
                 <div className="action-buttons">
-                    <button className="download-btn" disabled>
-                        <FaDownload /> Download Payslip (Coming Soon)
-                    </button>
+                    {currentSalary && currentSalary.status === 'PAID' && (
+                        <button
+                            className="download-btn"
+                            onClick={() => {
+                                const year = currentYear;
+                                const month = String(currentMonth).padStart(2, '0');
+                                fetchPayslip(year, month);
+                            }}
+                        >
+                            <FaDownload /> Download Payslip - {currentMonthName} {currentYear}
+                        </button>
+                    )}
+                    {(!currentSalary || currentSalary.status !== 'PAID') && (
+                        <button className="download-btn disabled" disabled>
+                            <FaDownload /> Payslip Available After Payment
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -401,6 +465,17 @@ const EmployeeSalary = () => {
                                                 </div>
                                             </div>
                                         )}
+                                        {/* View Payslip Button in History */}
+                                        {record.status === 'PAID' && (
+                                            <div className="history-action">
+                                                <button
+                                                    className="view-payslip-btn"
+                                                    onClick={() => handleViewPayslip(record)}
+                                                >
+                                                    <FaEye /> View Payslip
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -420,6 +495,156 @@ const EmployeeSalary = () => {
                     </div>
                 )}
             </div>
+
+            {/* ========== PAYSLIP MODAL ========== */}
+            {showPayslipModal && payslipData && (
+                <div className="modal-overlay" onClick={() => setShowPayslipModal(false)}>
+                    <div className="payslip-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3><FaMoneyBillWave /> Payslip</h3>
+                            <button className="modal-close" onClick={() => setShowPayslipModal(false)}>
+                                <FaTimesCircle />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            {loadingPayslip ? (
+                                <div className="loading-state">
+                                    <div className="spinner"></div>
+                                    <p>Loading payslip...</p>
+                                </div>
+                            ) : (
+                                <div id="payslip-content" className="payslip-content">
+                                    {/* Company Header */}
+                                    <div className="payslip-header">
+                                        <h1>{payslipData.company?.name || 'HRMS'}</h1>
+                                        <p>{payslipData.company?.address || 'Your Company Address'}</p>
+                                        <p>Email: {payslipData.company?.email || 'hr@hrms.com'} | Phone: {payslipData.company?.phone || '+91 XXXXXXXXXX'}</p>
+                                        <div className="payslip-title">
+                                            <h2>PAYSLIP</h2>
+                                            <p>For the month of {payslipData.salaryMonth} {payslipData.salaryYear}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Employee Details */}
+                                    <div className="payslip-section">
+                                        <h4>Employee Details</h4>
+                                        <div className="payslip-grid">
+                                            <div className="payslip-item">
+                                                <label><FaUser /> Name:</label>
+                                                <span>{payslipData.employee?.name}</span>
+                                            </div>
+                                            <div className="payslip-item">
+                                                <label><FaIdCard /> Employee ID:</label>
+                                                <span>{payslipData.employee?.employeeId}</span>
+                                            </div>
+                                            <div className="payslip-item">
+                                                <label><FaBriefcase /> Designation:</label>
+                                                <span>{payslipData.employee?.designation}</span>
+                                            </div>
+                                            <div className="payslip-item">
+                                                <label><FaBuilding /> Department:</label>
+                                                <span>{payslipData.employee?.department}</span>
+                                            </div>
+                                            <div className="payslip-item">
+                                                <label><FaCalendarAlt /> Joining Date:</label>
+                                                <span>{new Date(payslipData.employee?.joinDate).toLocaleDateString()}</span>
+                                            </div>
+                                            <div className="payslip-item">
+                                                <label>PAN Number:</label>
+                                                <span>{payslipData.employee?.panNumber}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Earnings and Deductions */}
+                                    <div className="payslip-salary">
+                                        <div className="payslip-earnings">
+                                            <h4>Earnings</h4>
+                                            <table className="payslip-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Particulars</th>
+                                                        <th>Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Basic Salary</td>
+                                                        <td>{formatCurrency(payslipData.basicSalary)}</td>
+                                                    </tr>
+                                                    {payslipData.additions?.map((add, idx) => (
+                                                        <tr key={idx}>
+                                                            <td>{add.name}</td>
+                                                            <td>{formatCurrency(add.amount)}</td>
+                                                        </tr>
+                                                    ))}
+                                                    <tr className="payslip-total">
+                                                        <td><strong>Total Earnings</strong></td>
+                                                        <td><strong>{formatCurrency(payslipData.totalAdditions + payslipData.basicSalary)}</strong></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div className="payslip-deductions">
+                                            <h4>Deductions</h4>
+                                            <table className="payslip-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Particulars</th>
+                                                        <th>Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {payslipData.deductions?.map((ded, idx) => (
+                                                        <tr key={idx}>
+                                                            <td>{ded.name}</td>
+                                                            <td>{formatCurrency(ded.amount)}</td>
+                                                        </tr>
+                                                    ))}
+                                                    <tr className="payslip-total">
+                                                        <td><strong>Total Deductions</strong></td>
+                                                        <td><strong>{formatCurrency(payslipData.totalDeductions)}</strong></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    {/* Net Salary */}
+                                    <div className="payslip-net">
+                                        <div className="payslip-net-amount">
+                                            <span>NET SALARY</span>
+                                            <strong>{formatCurrency(payslipData.netSalary)}</strong>
+                                        </div>
+                                    </div>
+
+                                    {/* Payment Details */}
+                                    <div className="payslip-footer">
+                                        <div className="payslip-payment">
+                                            <p><strong>Payment Details:</strong></p>
+                                            <p>Paid On: {new Date(payslipData.paymentInfo?.paidOn).toLocaleDateString()}</p>
+                                            <p>Paid By: {payslipData.paymentInfo?.paidBy}</p>
+                                            <p>Bank: {payslipData.employee?.bankName}</p>
+                                            <p>Account: {payslipData.employee?.bankAccount}</p>
+                                        </div>
+                                        <div className="payslip-note">
+                                            <p>This is a computer generated payslip. No signature required.</p>
+                                            <p>Generated on: {new Date().toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="modal-footer">
+                            <button className="close-btn" onClick={() => setShowPayslipModal(false)}>Close</button>
+                            <button className="download-btn" onClick={handleDownloadPDF}>
+                                <FaDownload /> Download PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -5,7 +5,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import {
     FaClock, FaCalendarAlt, FaPlus, FaEdit, FaTrash,
     FaTimes, FaSave, FaExclamationTriangle, FaRegCalendarAlt,
-    FaBriefcase, FaUserTie, FaUsers, FaShieldAlt, FaEye
+    FaBriefcase, FaUserTie, FaUsers, FaShieldAlt, FaEye,
+    FaMoneyBillWave, FaPercentage, FaRupeeSign
 } from 'react-icons/fa';
 import './HRPolicySettings.scss';
 
@@ -38,6 +39,9 @@ const HRPolicySettings = () => {
         applicableRoles: ['HR', 'MANAGER', 'EMPLOYEE']
     });
 
+    // ========== SALARY COMPONENTS STATE (VIEW ONLY) ==========
+    const [salaryComponents, setSalaryComponents] = useState([]);
+
     const [confirmModal, setConfirmModal] = useState({
         show: false, title: '', message: '', onConfirm: null
     });
@@ -53,6 +57,7 @@ const HRPolicySettings = () => {
                 setAttendanceRules(response.data.policy.attendanceRules || attendanceRules);
                 setHolidays(response.data.policy.holidays || []);
                 setLeaveTypes(response.data.policy.leaveTypes || []);
+                setSalaryComponents(response.data.policy.salaryComponents || []);
             }
         } catch { toast.error('Failed to fetch policy data'); }
         finally { setLoading(false); }
@@ -60,9 +65,7 @@ const HRPolicySettings = () => {
 
     useEffect(() => { fetchPolicy(); }, []);
 
-    // Attendance Rules are VIEW ONLY for HR - no update function
-    // const handleUpdateAttendanceRules is NOT created for HR
-
+    // ========== HOLIDAY HANDLERS ==========
     const handleAddHoliday = () => {
         setEditingHoliday(null);
         setHolidayForm({ name: '', type: 'public', date: '', startDate: '', endDate: '', isRange: false, description: '' });
@@ -106,6 +109,7 @@ const HRPolicySettings = () => {
         });
     };
 
+    // ========== LEAVE TYPE HANDLERS ==========
     const handleAddLeaveType = () => {
         setEditingLeave(null);
         setLeaveForm({ name: '', code: '', description: '', yearlyLimit: '', minDaysToApply: 1, maxDaysAtOnce: 5, applicableRoles: ['HR', 'MANAGER', 'EMPLOYEE'] });
@@ -167,10 +171,26 @@ const HRPolicySettings = () => {
         return rules[rule] || rule;
     };
 
+    // ========== SALARY COMPONENTS HELPER ==========
+    const getComponentTypeBadge = (type) => {
+        if (type === 'addition') {
+            return <span className="hps-badge hps-badge--addition">Addition</span>;
+        }
+        return <span className="hps-badge hps-badge--deduction">Deduction</span>;
+    };
+
+    const getComponentCalcBadge = (calcType, value) => {
+        if (calcType === 'percentage') {
+            return <span className="hps-calc-badge"><FaPercentage /> {value}%</span>;
+        }
+        return <span className="hps-calc-badge"><FaRupeeSign /> {value.toLocaleString()}</span>;
+    };
+
     const tabs = [
         { key: 'attendance', label: 'Attendance Rules', icon: <FaClock />, viewOnly: true },
         { key: 'holidays', label: 'Holidays', icon: <FaCalendarAlt />, viewOnly: false },
         { key: 'leavetypes', label: 'Leave Types', icon: <FaBriefcase />, viewOnly: false },
+        { key: 'salary', label: 'Salary Components', icon: <FaMoneyBillWave />, viewOnly: true }
     ];
 
     const holidayTypeConfig = {
@@ -198,7 +218,7 @@ const HRPolicySettings = () => {
                         <FaShieldAlt /> HR - Policies
                     </span>
                     <h1>Policy Settings</h1>
-                    <p>View company policies, manage holidays and leave types</p>
+                    <p>View company policies, manage holidays, leave types and view salary components</p>
                 </div>
             </div>
 
@@ -408,6 +428,71 @@ const HRPolicySettings = () => {
                             </table>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* ── SALARY COMPONENTS TAB (VIEW ONLY) ───────────────── */}
+            {activeTab === 'salary' && (
+                <div className="hps-card">
+                    <div className="hps-card__header">
+                        <div className="hps-card__title-wrap">
+                            <div className="hps-card__icon hps-card__icon--gold"><FaMoneyBillWave /></div>
+                            <div>
+                                <h3>Salary Components</h3>
+                                <p>View-only — Contact Admin for changes to salary structure</p>
+                            </div>
+                        </div>
+                        <div className="hps-viewonly-tag">
+                            <FaEye /> View Only Mode
+                        </div>
+                    </div>
+
+                    {salaryComponents.filter(sc => sc.isActive !== false).length === 0 ? (
+                        <div className="hps-empty">
+                            <div className="hps-empty__icon"><FaMoneyBillWave /></div>
+                            <p>No salary components configured yet.</p>
+                            <span>Contact Admin to set up salary components</span>
+                        </div>
+                    ) : (
+                        <div className="hps-table-wrap">
+                            <table className="hps-table hps-table--salary">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Name</th>
+                                        <th>Code</th>
+                                        <th>Type</th>
+                                        <th>Calculation</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {salaryComponents
+                                        .filter(sc => sc.isActive !== false)
+                                        .sort((a, b) => (a.order || 0) - (b.order || 0))
+                                        .map((component, idx) => (
+                                            <tr key={component._id || component.code}>
+                                                <td className="hps-order-cell">{idx + 1}</td>
+                                                <td className="hps-name-cell">
+                                                    <span className="hps-name-cell__name">{component.name}</span>
+                                                    {component.description && <span className="hps-name-cell__sub">{component.description}</span>}
+                                                </td>
+                                                <td><span className="hps-code-badge">{component.code}</span></td>
+                                                <td>{getComponentTypeBadge(component.type)}</td>
+                                                <td className="hps-calc-cell">{component.calculationType === 'percentage' ? 'Percentage of Basic' : 'Fixed Amount'}</td>
+                                                <td className="hps-value-cell">{getComponentCalcBadge(component.calculationType, component.value)}</td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    <div className="hps-card__footer">
+                        <div className="hps-note hps-note--info">
+                            <FaExclamationTriangle /> Salary components can only be modified by Admin. Basic salary is managed in employee profiles.
+                        </div>
+                    </div>
                 </div>
             )}
 

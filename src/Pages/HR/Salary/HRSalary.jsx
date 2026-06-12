@@ -21,7 +21,11 @@ import {
   FaExclamationTriangle,
   FaClock,
   FaLock,
-  FaCalendarCheck
+  FaCalendarCheck,
+  FaPlusCircle,
+  FaMinusCircle,
+  FaPercentage,
+  FaRupeeSign
 } from 'react-icons/fa';
 import EmployeeSalary from '../../Employee/Salary/EmployeeSalary';
 import './HRSalary.scss';
@@ -31,7 +35,7 @@ const HRSalary = () => {
   const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState(null);
   const [bulkProcessing, setBulkProcessing] = useState(false);
-  const [windowInfo, setWindowInfo] = useState(null); // For showing time window info
+  const [windowInfo, setWindowInfo] = useState(null);
 
   // Filters
   const [filters, setFilters] = useState({
@@ -56,6 +60,13 @@ const HRSalary = () => {
   const [employeeDetails, setEmployeeDetails] = useState(null);
   const [leaveUsage, setLeaveUsage] = useState(null);
 
+  // ========== NEW: Salary Component Selection ==========
+  const [availableComponents, setAvailableComponents] = useState([]);
+  const [showComponentModal, setShowComponentModal] = useState(false);
+  const [selectedComponents, setSelectedComponents] = useState([]);
+  const [currentCalculateEmployee, setCurrentCalculateEmployee] = useState(null);
+  const [loadingComponents, setLoadingComponents] = useState(false);
+
   // Current user (HR) info
   const [currentUserEmployeeId, setCurrentUserEmployeeId] = useState(null);
 
@@ -79,6 +90,26 @@ const HRSalary = () => {
   });
 
   const apiUrl = import.meta.env.VITE_API_URL;
+
+  // ========== FETCH AVAILABLE COMPONENTS ==========
+  const fetchAvailableComponents = async () => {
+    setLoadingComponents(true);
+    try {
+      const response = await axios.get(`${apiUrl}/salary/components`, {
+        withCredentials: true,
+      });
+      if (response.data.success) {
+        setAvailableComponents(response.data.components);
+        const allCodes = response.data.components.map(c => c.code);
+        setSelectedComponents(allCodes);
+      }
+    } catch (error) {
+      console.error('Failed to fetch components:', error);
+      toast.error('Failed to fetch salary components');
+    } finally {
+      setLoadingComponents(false);
+    }
+  };
 
   // Get current user ID
   useEffect(() => {
@@ -122,12 +153,10 @@ const HRSalary = () => {
 
     const lastDayOfTargetMonth = new Date(year, month, 0).getDate();
 
-    // Case 1: We are in the target month AND date is between 26th and end of month
     if (currentYear === year && currentMonth === month) {
       return currentDate >= 26 && currentDate <= lastDayOfTargetMonth;
     }
 
-    // Case 2: We are in next month AND date is between 1st and 5th
     let nextMonth = month + 1;
     let nextYear = year;
     if (nextMonth > 12) {
@@ -136,7 +165,7 @@ const HRSalary = () => {
     }
 
     if (currentYear === nextYear && currentMonth === nextMonth) {
-      return currentDate >= 1 && currentDate <= 5;
+      return currentDate >= 1 && currentDate <= 15;
     }
 
     return false;
@@ -157,12 +186,12 @@ const HRSalary = () => {
     }
 
     return {
-      message: `${monthName} ${year} salary can only be processed between ${monthName} 26th-${lastDay} and ${nextMonthName} 1st-5th.`,
-      currentWindow: `Current allowed window: ${monthName} 26th-${lastDay} or ${nextMonthName} 1st-5th`,
+      message: `${monthName} ${year} salary can only be processed between ${monthName} 26th-${lastDay} and ${nextMonthName} 1st-15th.`,
+      currentWindow: `Current allowed window: ${monthName} 26th-${lastDay} or ${nextMonthName} 1st-15th`,
       fromDate: `${year}-${String(month).padStart(2, '0')}-26`,
       toDate: `${year}-${String(month).padStart(2, '0')}-${lastDay}`,
       fromNextDate: `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`,
-      toNextDate: `${nextYear}-${String(nextMonth).padStart(2, '0')}-05`,
+      toNextDate: `${nextYear}-${String(nextMonth).padStart(2, '0')}-15`,
       targetMonth: monthName,
       targetYear: year
     };
@@ -223,7 +252,6 @@ const HRSalary = () => {
           unpaid: filteredSalaries.filter(s => s.status === 'UNPAID').length,
         });
 
-        // Check time window after fetching
         checkAndShowWindowBanner();
       }
     } catch (error) {
@@ -236,10 +264,77 @@ const HRSalary = () => {
   useEffect(() => {
     if (activeTab === 'allEmployees') {
       fetchAllSalaries();
+      fetchAvailableComponents();
     }
   }, [activeTab, filters.month, filters.year, filters.status, filters.page]);
 
-  // Calculate salary for an employee
+  // ========== OPEN COMPONENT SELECTION MODAL ==========
+  const openComponentSelection = (employeeId, employeeName) => {
+    setCurrentCalculateEmployee({ employeeId, employeeName });
+    setShowComponentModal(true);
+  };
+
+  // ========== TOGGLE COMPONENT SELECTION ==========
+  const toggleComponent = (code) => {
+    if (selectedComponents.includes(code)) {
+      setSelectedComponents(selectedComponents.filter(c => c !== code));
+    } else {
+      setSelectedComponents([...selectedComponents, code]);
+    }
+  };
+
+  // ========== SELECT ALL COMPONENTS ==========
+  const selectAllComponents = () => {
+    const allCodes = availableComponents.map(c => c.code);
+    setSelectedComponents(allCodes);
+  };
+
+  // ========== DESELECT ALL COMPONENTS ==========
+  const deselectAllComponents = () => {
+    setSelectedComponents([]);
+  };
+
+  // ========== CALCULATE SALARY WITH SELECTED COMPONENTS ==========
+  const handleCalculateSalaryWithComponents = async () => {
+    if (!currentCalculateEmployee) return;
+
+    const { year, month } = filters;
+    const { employeeId, employeeName } = currentCalculateEmployee;
+
+    setShowComponentModal(false);
+    setProcessingId(employeeId);
+
+    try {
+      const response = await axios.post(
+        `${apiUrl}/salary/calculate/${employeeId}/${year}/${month}`,
+        { selectedComponents: selectedComponents },
+        { withCredentials: true }
+      );
+      if (response.data.success) {
+        toast.success(`Salary calculated for ${employeeName}`);
+        fetchAllSalaries();
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || 'Failed to calculate salary';
+      toast.error(errorMsg);
+      if (error.response?.data?.error === 'SALARY_CALCULATION_WINDOW_CLOSED') {
+        const allowedWindow = error.response?.data?.allowedWindow;
+        setTimeWindowBanner({
+          show: true,
+          message: errorMsg,
+          type: 'error',
+          allowedWindow: allowedWindow
+        });
+      }
+    } finally {
+      setProcessingId(null);
+      setCurrentCalculateEmployee(null);
+    }
+  };
+
+  // Calculate salary for an employee (opens component selection)
   const handleCalculateSalary = async (employeeId, employeeName) => {
     const { year, month } = filters;
     const isAllowed = isSalaryProcessingAllowed(year, month);
@@ -253,43 +348,7 @@ const HRSalary = () => {
       return;
     }
 
-    showConfirm(
-      'Calculate Salary',
-      `Calculate salary for ${employeeName} for ${getMonthName(month)} ${year}?`,
-      async () => {
-        setProcessingId(employeeId);
-        try {
-          const response = await axios.post(
-            `${apiUrl}/salary/calculate/${employeeId}/${year}/${month}`,
-            {},
-            { withCredentials: true }
-          );
-          if (response.data.success) {
-            toast.success(`Salary calculated for ${employeeName}`);
-            fetchAllSalaries();
-          } else {
-            toast.error(response.data.message);
-          }
-        } catch (error) {
-          const errorMsg = error.response?.data?.message || 'Failed to calculate salary';
-          toast.error(errorMsg);
-          // If it's a time window error, show the banner
-          if (error.response?.data?.error === 'SALARY_CALCULATION_WINDOW_CLOSED') {
-            const allowedWindow = error.response?.data?.allowedWindow;
-            setTimeWindowBanner({
-              show: true,
-              message: errorMsg,
-              type: 'error',
-              allowedWindow: allowedWindow
-            });
-          }
-        } finally {
-          setProcessingId(null);
-        }
-      },
-      'info',
-      'Calculate'
-    );
+    openComponentSelection(employeeId, employeeName);
   };
 
   // Mark salary as paid
@@ -382,7 +441,7 @@ const HRSalary = () => {
             try {
               await axios.post(
                 `${apiUrl}/salary/calculate/${emp.employeeId}/${year}/${month}`,
-                {},
+                { selectedComponents: [] },
                 { withCredentials: true }
               );
               successCount++;
@@ -512,6 +571,12 @@ const HRSalary = () => {
 
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+
+  const isProcessingAllowed = isSalaryProcessingAllowed(filters.year, filters.month);
+
+  // Separate components by type
+  const additionComponents = availableComponents.filter(c => c.type === 'addition');
+  const deductionComponents = availableComponents.filter(c => c.type === 'deduction');
 
   return (
     <div className="hr-salary">
@@ -711,18 +776,20 @@ const HRSalary = () => {
                             <td className="net-salary">{formatCurrency(salary.netSalary)}</td>
                             <td>{getStatusBadge(salary.status)}</td>
                             <td className="actions-cell">
-                              {/* Calculate button */}
-                              <button
-                                className={`action-calc ${!isProcessingAllowed ? 'disabled' : ''}`}
-                                onClick={() => handleCalculateSalary(salary.employeeId, salary.employeeName)}
-                                disabled={processingId === salary.employeeId || !isProcessingAllowed}
-                                title={!isProcessingAllowed ? "Salary calculation window is closed" : "Calculate Salary"}
-                              >
-                                {processingId === salary.employeeId ? <FaSpinner className="spinning" /> : <FaCalculator />}
-                                Calculate
-                              </button>
+                              {/* Calculate button - only if NOT PAID */}
+                              {salary.status !== 'PAID' && (
+                                <button
+                                  className={`action-calc ${!isProcessingAllowed ? 'disabled' : ''}`}
+                                  onClick={() => handleCalculateSalary(salary.employeeId, salary.employeeName)}
+                                  disabled={processingId === salary.employeeId || !isProcessingAllowed}
+                                  title={!isProcessingAllowed ? "Salary calculation window is closed" : "Calculate Salary (Select Components)"}
+                                >
+                                  {processingId === salary.employeeId ? <FaSpinner className="spinning" /> : <FaCalculator />}
+                                  Calculate
+                                </button>
+                              )}
 
-                              {/* Mark Paid button */}
+                              {/* Mark Paid button - only if NOT PAID and NOT self */}
                               {hasRecord && salary.status !== 'PAID' && !isSelf && (
                                 <button
                                   className={`action-paid ${!isProcessingAllowed ? 'disabled' : ''}`}
@@ -778,6 +845,113 @@ const HRSalary = () => {
         </div>
       )}
 
+      {/* ========== COMPONENT SELECTION MODAL ========== */}
+      {showComponentModal && (
+        <div className="modal-overlay" onClick={() => setShowComponentModal(false)}>
+          <div className="component-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3><FaCalculator /> Select Salary Components</h3>
+              <button className="modal-close" onClick={() => setShowComponentModal(false)}>
+                <FaTimesCircle />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="component-info">
+                <p>Select which components to include for <strong>{currentCalculateEmployee?.employeeName}</strong></p>
+                <small>Basic salary will be taken from employee profile</small>
+              </div>
+
+              <div className="component-actions">
+                <button className="component-select-all" onClick={selectAllComponents}>
+                  <FaPlusCircle /> Select All
+                </button>
+                <button className="component-deselect-all" onClick={deselectAllComponents}>
+                  <FaMinusCircle /> Deselect All
+                </button>
+              </div>
+
+              {loadingComponents ? (
+                <div className="component-loading">
+                  <div className="spinner"></div>
+                  <p>Loading components...</p>
+                </div>
+              ) : (
+                <>
+                  {/* Additions Section */}
+                  {additionComponents.length > 0 && (
+                    <div className="component-group">
+                      <h4 className="component-group__title addition">
+                        <FaPlusCircle /> Additions (Earnings)
+                      </h4>
+                      <div className="component-list">
+                        {additionComponents.map(comp => (
+                          <label key={comp.code} className="component-item">
+                            <input
+                              type="checkbox"
+                              checked={selectedComponents.includes(comp.code)}
+                              onChange={() => toggleComponent(comp.code)}
+                            />
+                            <div className="component-item__info">
+                              <strong>{comp.name}</strong>
+                              <span className="component-code">{comp.code}</span>
+                            </div>
+                            <div className="component-item__value">
+                              {comp.calculationType === 'percentage' ? (
+                                <><FaPercentage /> {comp.value}%</>
+                              ) : (
+                                <><FaRupeeSign /> {comp.value.toLocaleString()}</>
+                              )}
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Deductions Section */}
+                  {deductionComponents.length > 0 && (
+                    <div className="component-group">
+                      <h4 className="component-group__title deduction">
+                        <FaMinusCircle /> Deductions
+                      </h4>
+                      <div className="component-list">
+                        {deductionComponents.map(comp => (
+                          <label key={comp.code} className="component-item">
+                            <input
+                              type="checkbox"
+                              checked={selectedComponents.includes(comp.code)}
+                              onChange={() => toggleComponent(comp.code)}
+                            />
+                            <div className="component-item__info">
+                              <strong>{comp.name}</strong>
+                              <span className="component-code">{comp.code}</span>
+                            </div>
+                            <div className="component-item__value">
+                              {comp.calculationType === 'percentage' ? (
+                                <><FaPercentage /> {comp.value}%</>
+                              ) : (
+                                <><FaRupeeSign /> {comp.value.toLocaleString()}</>
+                              )}
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="cancel-btn" onClick={() => setShowComponentModal(false)}>Cancel</button>
+              <button className="save-btn" onClick={handleCalculateSalaryWithComponents} disabled={processingId !== null}>
+                {processingId ? <FaSpinner className="spinning" /> : <FaCalculator />}
+                Calculate Salary
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Employee Details Modal */}
       {showDetailModal && selectedEmployee && (
         <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
@@ -799,6 +973,10 @@ const HRSalary = () => {
                       <strong>{formatCurrency(selectedEmployee.basicSalary)}</strong>
                     </div>
                     <div className="summary-item">
+                      <span>Gross Salary:</span>
+                      <strong>{formatCurrency(employeeDetails.grossSalary || employeeDetails.netSalary)}</strong>
+                    </div>
+                    <div className="summary-item">
                       <span>Net Salary:</span>
                       <strong className="net">{formatCurrency(employeeDetails.netSalary)}</strong>
                     </div>
@@ -807,6 +985,31 @@ const HRSalary = () => {
                       {getStatusBadge(employeeDetails.status)}
                     </div>
                   </div>
+
+                  {/* Used Components Section */}
+                  {employeeDetails.usedComponents && employeeDetails.usedComponents.length > 0 && (
+                    <div className="detail-section">
+                      <h4>Salary Components Used</h4>
+                      <div className="components-used-grid">
+                        {employeeDetails.usedComponents.map((comp, idx) => (
+                          <div key={idx} className={`component-used-item ${comp.type}`}>
+                            <div className="component-used-info">
+                              <strong>{comp.name}</strong>
+                              <span className="component-used-code">{comp.code}</span>
+                              {comp.calculationType === 'percentage' ? (
+                                <small>({comp.value}% of basic)</small>
+                              ) : (
+                                <small>(Fixed)</small>
+                              )}
+                            </div>
+                            <div className="component-used-amount">
+                              {comp.type === 'addition' ? '+' : '-'} {formatCurrency(comp.amount)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="detail-section">
                     <h4>Attendance Summary</h4>
@@ -838,6 +1041,7 @@ const HRSalary = () => {
                       <div><span>Half Day Deduction:</span> <strong>{formatCurrency(employeeDetails.halfDayDeduction || 0)}</strong></div>
                       <div><span>Absent Deduction:</span> <strong>{formatCurrency(employeeDetails.absentDeduction || 0)}</strong></div>
                       <div><span>Leave Deduction:</span> <strong>{formatCurrency(employeeDetails.leaveDeduction || 0)}</strong></div>
+                      <div><span>Component Deductions:</span> <strong>{formatCurrency(employeeDetails.totalDeductionsFromComponents || 0)}</strong></div>
                       <div><span>Total Deductions:</span> <strong className="deduction">{formatCurrency(employeeDetails.totalDeductions || 0)}</strong></div>
                     </div>
                   </div>
