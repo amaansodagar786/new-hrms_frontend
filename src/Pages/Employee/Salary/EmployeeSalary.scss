@@ -158,6 +158,178 @@
     }
 }
 
+// ========== SALARY COMPONENTS USED SECTION ==========
+.components-used-section {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--hrms-border);
+    background: #F8F9FF;
+
+    h3 {
+        font-family: var(--hrms-font-head);
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--hrms-text-primary);
+        margin-bottom: 16px;
+    }
+}
+
+.components-used-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.components-group {
+    background: var(--hrms-card);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--hrms-border);
+
+    .components-group-title {
+        font-family: var(--hrms-font-head);
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--hrms-border);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        &.additions {
+            color: #059669;
+
+            svg {
+                color: #059669;
+            }
+        }
+
+        &.deductions {
+            color: #DC2626;
+
+            svg {
+                color: #DC2626;
+            }
+        }
+    }
+}
+
+.components-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.component-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #F1F4FD;
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &.addition .component-amount {
+        color: #059669;
+    }
+
+    &.deduction .component-amount {
+        color: #DC2626;
+    }
+
+    .component-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+
+        strong {
+            font-size: 0.8rem;
+            color: var(--hrms-text-primary);
+        }
+
+        .component-code {
+            font-size: 0.65rem;
+            color: var(--hrms-text-muted);
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        small {
+            font-size: 0.6rem;
+            color: var(--hrms-text-muted);
+        }
+    }
+
+    .component-amount {
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+}
+
+.components-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    margin-top: 8px;
+    border-top: 1px solid var(--hrms-border);
+    font-weight: 600;
+
+    &.addition-total {
+        color: #059669;
+    }
+
+    &.deduction-total {
+        color: #DC2626;
+    }
+
+    span {
+        font-size: 0.75rem;
+    }
+
+    strong {
+        font-size: 0.85rem;
+    }
+}
+
+// Used components in history
+.used-components-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.used-component-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #F1F4FD;
+
+    span {
+        font-size: 0.7rem;
+        color: var(--hrms-text-secondary);
+    }
+
+    strong {
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    &.addition strong {
+        color: #059669;
+    }
+
+    &.deduction strong {
+        color: #DC2626;
+    }
+}
+
 // ========== ATTENDANCE SUMMARY ==========
 .attendance-summary {
     padding: 20px 28px;
@@ -705,6 +877,7 @@
         top: 0;
         background: var(--hrms-card);
         z-index: 1;
+        border-radius: 20px 20px 0 0;
 
         h3 {
             font-family: var(--hrms-font-head);
@@ -1047,6 +1220,20 @@
 
     .action-buttons {
         justify-content: center;
+    }
+
+    .components-used-list {
+        gap: 12px;
+    }
+
+    .component-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .component-info {
+        flex-wrap: wrap;
     }
 }
 

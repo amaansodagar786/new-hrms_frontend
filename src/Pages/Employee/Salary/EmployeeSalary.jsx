@@ -227,6 +227,64 @@ const EmployeeSalary = () => {
                             </div>
                         </div>
 
+                        {/* ========== SALARY COMPONENTS USED SECTION ========== */}
+                        {currentSalary.usedComponents && currentSalary.usedComponents.length > 0 && (
+                            <div className="components-used-section">
+                                <h3>Salary Components Used</h3>
+                                <div className="components-used-list">
+                                    {/* Additions */}
+                                    {currentSalary.usedComponents.filter(c => c.type === 'addition').length > 0 && (
+                                        <div className="components-group">
+                                            <h4 className="components-group-title additions">
+                                                <FaPlusCircle /> Additions (Earnings)
+                                            </h4>
+                                            <div className="components-items">
+                                                {currentSalary.usedComponents.filter(c => c.type === 'addition').map((comp, idx) => (
+                                                    <div key={idx} className="component-item addition">
+                                                        <div className="component-info">
+                                                            <strong>{comp.name}</strong>
+                                                            <span className="component-code">{comp.code}</span>
+                                                            <small>({comp.calculationType === 'percentage' ? `${comp.value}% of basic` : `₹${comp.value} fixed`})</small>
+                                                        </div>
+                                                        <div className="component-amount">+ {formatCurrency(comp.amount)}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="components-total addition-total">
+                                                <span>Total Additions</span>
+                                                <strong>+ {formatCurrency(currentSalary.totalAdditions || 0)}</strong>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Deductions */}
+                                    {currentSalary.usedComponents.filter(c => c.type === 'deduction').length > 0 && (
+                                        <div className="components-group">
+                                            <h4 className="components-group-title deductions">
+                                                <FaMinusCircle /> Deductions
+                                            </h4>
+                                            <div className="components-items">
+                                                {currentSalary.usedComponents.filter(c => c.type === 'deduction').map((comp, idx) => (
+                                                    <div key={idx} className="component-item deduction">
+                                                        <div className="component-info">
+                                                            <strong>{comp.name}</strong>
+                                                            <span className="component-code">{comp.code}</span>
+                                                            <small>({comp.calculationType === 'percentage' ? `${comp.value}% of basic` : `₹${comp.value} fixed`})</small>
+                                                        </div>
+                                                        <div className="component-amount">- {formatCurrency(comp.amount)}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="components-total deduction-total">
+                                                <span>Total Component Deductions</span>
+                                                <strong>- {formatCurrency(currentSalary.totalDeductionsFromComponents || 0)}</strong>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Attendance Summary */}
                         <div className="attendance-summary">
                             <h3>Attendance Summary</h3>
@@ -446,6 +504,22 @@ const EmployeeSalary = () => {
                                                 <div><span>Unpaid Leave:</span> <strong>{record.attendanceSummary?.unpaidLeaveDays || 0}</strong></div>
                                             </div>
                                         </div>
+
+                                        {/* Used Components in History */}
+                                        {record.usedComponents && record.usedComponents.length > 0 && (
+                                            <div className="detail-section">
+                                                <h4>Salary Components Used</h4>
+                                                <div className="used-components-list">
+                                                    {record.usedComponents.map((comp, idx) => (
+                                                        <div key={idx} className={`used-component-item ${comp.type}`}>
+                                                            <span>{comp.name} ({comp.code})</span>
+                                                            <strong>{comp.type === 'addition' ? '+' : '-'} {formatCurrency(comp.amount)}</strong>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div className="detail-section">
                                             <h4>Deductions</h4>
                                             <div className="detail-grid">
