@@ -846,7 +846,7 @@
     background: #F8F9FF;
     border-radius: 12px;
     padding: 16px;
-    
+
     h4 {
         font-family: var(--hrms-font-head);
         font-size: 0.8rem;
@@ -869,7 +869,7 @@
     background: #F8F9FF;
     border-radius: 12px;
     padding: 16px;
-    
+
     h4 {
         font-family: var(--hrms-font-head);
         font-size: 0.8rem;
@@ -890,12 +890,12 @@
         border-radius: 8px;
         background: white;
         cursor: pointer;
-        
+
         &:hover {
             border-color: var(--hrms-primary);
         }
     }
-    
+
     .existing-file {
         display: flex;
         align-items: center;
@@ -904,29 +904,29 @@
         background: white;
         border-radius: 8px;
         margin-top: 8px;
-        
+
         svg {
             color: var(--hrms-primary);
             font-size: 0.9rem;
         }
-        
+
         a {
             color: var(--hrms-primary);
             text-decoration: none;
             font-size: 0.8rem;
-            
+
             &:hover {
                 text-decoration: underline;
             }
         }
-        
+
         small {
             font-size: 0.65rem;
             color: var(--hrms-text-muted);
             margin-left: auto;
         }
     }
-    
+
     .selected-file {
         display: flex;
         align-items: center;
@@ -935,18 +935,18 @@
         background: white;
         border-radius: 8px;
         margin-top: 8px;
-        
+
         svg {
             color: var(--hrms-success);
             font-size: 0.9rem;
         }
-        
+
         span {
             font-size: 0.8rem;
             color: var(--hrms-text-primary);
             flex: 1;
         }
-        
+
         button {
             background: rgba(239, 68, 68, 0.1);
             border: none;
@@ -955,7 +955,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.7rem;
-            
+
             &:hover {
                 background: rgba(239, 68, 68, 0.2);
             }
@@ -968,7 +968,7 @@
     color: var(--hrms-primary);
     text-decoration: none;
     font-size: 0.75rem;
-    
+
     &:hover {
         text-decoration: underline;
     }
@@ -1000,32 +1000,34 @@
 
 // Responsive adjustments for new sections
 @media (max-width: 768px) {
+
     .detail-modal--large,
     .edit-modal--large {
         width: 95%;
         margin: 16px;
     }
-    
+
     .form-row {
         grid-template-columns: 1fr;
         gap: 12px;
     }
-    
+
     .details-section,
     .edit-section {
         padding: 12px;
     }
-    
+
     .file-upload-area {
+
         .existing-file,
         .selected-file {
             flex-wrap: wrap;
-            
+
             small {
                 margin-left: 0;
                 width: 100%;
             }
-            
+
             button {
                 margin-left: auto;
             }
@@ -1035,13 +1037,287 @@
 
 // Small screen adjustments
 @media (max-width: 480px) {
+
     .details-tabs,
     .edit-tabs {
         gap: 16px;
     }
-    
+
     .profile-badges {
         flex-direction: column;
         align-items: flex-start;
+    }
+}
+
+// ========== PASSWORD RESET MODAL STYLES ==========
+.password-modal {
+    background: var(--hrms-card);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 450px;
+    max-height: 90vh;
+    overflow: auto;
+    animation: ae-modal-in 0.3s ease;
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--hrms-border);
+
+        h3 {
+            font-family: var(--hrms-font-head);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--hrms-text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--hrms-text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+
+            &:hover {
+                color: var(--hrms-danger);
+            }
+        }
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .modal-footer {
+        display: flex;
+        gap: 12px;
+        padding: 16px 24px 24px;
+        border-top: 1px solid var(--hrms-border);
+
+        .cancel-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 10px;
+            font-family: var(--hrms-font-head);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+            border: 1.5px solid var(--hrms-border);
+            color: var(--hrms-text-secondary);
+
+            &:hover {
+                background: #F8F9FF;
+            }
+        }
+
+        .save-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 10px;
+            font-family: var(--hrms-font-head);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: linear-gradient(135deg, var(--hrms-primary), var(--hrms-primary-dark));
+            color: white;
+            border: none;
+
+            &:hover:not(:disabled) {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(90, 103, 242, 0.4);
+            }
+
+            &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+        }
+    }
+}
+
+// Password Reset Section in Edit Modal
+.password-reset-section {
+    background: #FEF2F2;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .password-reset-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #EF4444, #DC2626);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-family: var(--hrms-font-head);
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+    }
+
+    small {
+        font-size: 0.7rem;
+        color: #DC2626;
+    }
+}
+
+// Password Reset Info in Modal
+.password-reset-info {
+    margin-bottom: 20px;
+
+    .reset-employee {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+        background: #F8F9FF;
+        border-radius: 12px;
+        margin-bottom: 16px;
+
+        .reset-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--hrms-primary), var(--hrms-accent));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        h4 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+
+        p {
+            font-size: 0.75rem;
+            color: var(--hrms-text-muted);
+        }
+    }
+
+    .reset-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+        background: rgba(16, 185, 129, 0.08);
+        border-radius: 10px;
+        border-left: 3px solid var(--hrms-success);
+
+        svg {
+            color: var(--hrms-success);
+            font-size: 1rem;
+            margin-top: 2px;
+        }
+
+        p {
+            font-size: 0.75rem;
+            color: var(--hrms-text-secondary);
+            line-height: 1.5;
+
+            strong {
+                color: var(--hrms-success);
+            }
+        }
+    }
+}
+
+// Responsive for Password Modal
+@media (max-width: 768px) {
+    .password-modal {
+        width: 95%;
+        margin: 16px;
+    }
+
+    .password-reset-section {
+        flex-direction: column;
+        text-align: center;
+
+        .password-reset-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    .password-reset-info .reset-employee {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+.password-modal {
+    .form-group {
+        margin-bottom: 20px;
+        
+        label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--hrms-text-primary);
+            margin-bottom: 8px;
+            
+            svg {
+                font-size: 0.8rem;
+                color: var(--hrms-primary);
+            }
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--hrms-border);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-family: var(--hrms-font-body);
+            background: #FAFBFF;
+            transition: all 0.2s;
+            
+            &:focus {
+                outline: none;
+                border-color: var(--hrms-primary);
+                box-shadow: 0 0 0 3px var(--hrms-primary-glow);
+                background: #fff;
+            }
+            
+            &::placeholder {
+                color: var(--hrms-text-muted);
+            }
+        }
     }
 }

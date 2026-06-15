@@ -30,7 +30,10 @@ import {
     FaFileAlt,
     FaTint,
     FaIdCard as FaAadhar,
-    FaFileUpload
+    FaFileUpload,
+    FaLock,
+    FaKey , 
+    FaInfoCircle 
 } from 'react-icons/fa';
 import './AllEmployees.scss';
 
@@ -73,6 +76,13 @@ const AllEmployees = () => {
     });
     const [updating, setUpdating] = useState(false);
     const [managers, setManagers] = useState([]);
+
+    // Password Reset Modal
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordResetEmployee, setPasswordResetEmployee] = useState(null);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [resettingPassword, setResettingPassword] = useState(false);
 
     // File upload state
     const [uploadingFile, setUploadingFile] = useState(false);
@@ -177,6 +187,46 @@ const AllEmployees = () => {
         });
         setSelectedFile(null);
         setShowEditModal(true);
+    };
+
+    // Handle password reset click
+    const handlePasswordResetClick = (employee) => {
+        setPasswordResetEmployee(employee);
+        setNewPassword('');
+        setConfirmPassword('');
+        setShowPasswordModal(true);
+    };
+
+    // Handle password reset submit
+    const handlePasswordReset = async () => {
+        if (!newPassword || newPassword.length < 6) {
+            toast.error('Password must be at least 6 characters long');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            toast.error('Passwords do not match');
+            return;
+        }
+
+        setResettingPassword(true);
+        try {
+            const response = await axios.put(
+                `${apiUrl}/admin/employees/${passwordResetEmployee.employeeId}/reset-password`,
+                { newPassword: newPassword },
+                { withCredentials: true }
+            );
+            if (response.data.success) {
+                toast.success(response.data.message);
+                setShowPasswordModal(false);
+                setNewPassword('');
+                setConfirmPassword('');
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to reset password');
+        } finally {
+            setResettingPassword(false);
+        }
     };
 
     // Handle file upload
@@ -445,7 +495,6 @@ const AllEmployees = () => {
                                 </tbody>
                             </table>
                         </div>
-
                         {/* Pagination */}
                         {pagination.totalPages > 1 && (
                             <div className="pagination">
@@ -463,447 +512,525 @@ const AllEmployees = () => {
             </div>
 
             {/* ========== EMPLOYEE DETAILS MODAL ========== */}
-            {showDetailModal && selectedEmployee && (
-                <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
-                    <div className="detail-modal detail-modal--large" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>Employee Details</h3>
-                            <button className="modal-close" onClick={() => setShowDetailModal(false)}>
-                                <FaTimes />
-                            </button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="employee-profile-header">
-                                <div className="profile-avatar-large">
-                                    {selectedEmployee.name?.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="profile-info">
-                                    <h2>{selectedEmployee.name}</h2>
-                                    <div className="profile-badges">
-                                        {getRoleBadge(selectedEmployee.role)}
-                                        {getStatusBadge(selectedEmployee.isActive)}
-                                    </div>
-                                </div>
+            {
+                showDetailModal && selectedEmployee && (
+                    <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
+                        <div className="detail-modal detail-modal--large" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h3>Employee Details</h3>
+                                <button className="modal-close" onClick={() => setShowDetailModal(false)}>
+                                    <FaTimes />
+                                </button>
                             </div>
-
-                            <div className="details-tabs">
-                                <div className="details-section">
-                                    <h4>Personal Information</h4>
-                                    <div className="details-grid">
-                                        <div className="detail-item">
-                                            <FaIdCard />
-                                            <div>
-                                                <label>Employee ID</label>
-                                                <p>{selectedEmployee.employeeId}</p>
-                                            </div>
-                                        </div>
-                                        <div className="detail-item">
-                                            <FaEnvelope />
-                                            <div>
-                                                <label>Email</label>
-                                                <p>{selectedEmployee.email}</p>
-                                            </div>
-                                        </div>
-                                        <div className="detail-item">
-                                            <FaPhone />
-                                            <div>
-                                                <label>Phone</label>
-                                                <p>{selectedEmployee.phone || 'Not provided'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="detail-item">
-                                            <FaMapMarkerAlt />
-                                            <div>
-                                                <label>Address</label>
-                                                <p>{selectedEmployee.address || 'Not provided'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="detail-item">
-                                            <FaCalendarAlt />
-                                            <div>
-                                                <label>Join Date</label>
-                                                <p>{formatDate(selectedEmployee.joinDate)}</p>
-                                            </div>
-                                        </div>
-                                        <div className="detail-item">
-                                            <FaTint />
-                                            <div>
-                                                <label>Blood Group</label>
-                                                <p>{selectedEmployee.bloodGroup || 'Not provided'}</p>
-                                            </div>
+                            <div className="modal-body">
+                                <div className="employee-profile-header">
+                                    <div className="profile-avatar-large">
+                                        {selectedEmployee.name?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="profile-info">
+                                        <h2>{selectedEmployee.name}</h2>
+                                        <div className="profile-badges">
+                                            {getRoleBadge(selectedEmployee.role)}
+                                            {getStatusBadge(selectedEmployee.isActive)}
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="details-section">
-                                    <h4>Professional Information</h4>
-                                    <div className="details-grid">
-                                        <div className="detail-item">
-                                            <FaBuilding />
-                                            <div>
-                                                <label>Department</label>
-                                                <p>{selectedEmployee.department || 'Not assigned'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="detail-item">
-                                            <FaBriefcase />
-                                            <div>
-                                                <label>Designation</label>
-                                                <p>{selectedEmployee.designation || 'Not assigned'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="detail-item">
-                                            <FaUserTie />
-                                            <div>
-                                                <label>Manager</label>
-                                                <p>{selectedEmployee.managerName || 'No manager assigned'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="detail-item">
-                                            <FaMoneyBillWave />
-                                            <div>
-                                                <label>Salary</label>
-                                                <p>{formatCurrency(selectedEmployee.salary)}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="details-section">
-                                    <h4>Documents & IDs</h4>
-                                    <div className="details-grid">
-                                        <div className="detail-item">
-                                            <FaIdCard />
-                                            <div>
-                                                <label>PAN Card Number</label>
-                                                <p>{selectedEmployee.panNumber ? maskString(selectedEmployee.panNumber, 2, 2) : 'Not provided'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="detail-item">
-                                            <FaAadhar />
-                                            <div>
-                                                <label>Aadhar Number</label>
-                                                <p>{selectedEmployee.aadharNumber ? maskString(selectedEmployee.aadharNumber, 2, 2) : 'Not provided'}</p>
-                                            </div>
-                                        </div>
-                                        {selectedEmployee.joinLetter && (
+                                <div className="details-tabs">
+                                    <div className="details-section">
+                                        <h4>Personal Information</h4>
+                                        <div className="details-grid">
                                             <div className="detail-item">
-                                                <FaFileAlt />
+                                                <FaIdCard />
                                                 <div>
-                                                    <label>Join Letter</label>
-                                                    <a href={selectedEmployee.joinLetter} target="_blank" rel="noopener noreferrer" className="file-link">
-                                                        View Document
-                                                    </a>
+                                                    <label>Employee ID</label>
+                                                    <p>{selectedEmployee.employeeId}</p>
                                                 </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaEnvelope />
+                                                <div>
+                                                    <label>Email</label>
+                                                    <p>{selectedEmployee.email}</p>
+                                                </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaPhone />
+                                                <div>
+                                                    <label>Phone</label>
+                                                    <p>{selectedEmployee.phone || 'Not provided'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaMapMarkerAlt />
+                                                <div>
+                                                    <label>Address</label>
+                                                    <p>{selectedEmployee.address || 'Not provided'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaCalendarAlt />
+                                                <div>
+                                                    <label>Join Date</label>
+                                                    <p>{formatDate(selectedEmployee.joinDate)}</p>
+                                                </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaTint />
+                                                <div>
+                                                    <label>Blood Group</label>
+                                                    <p>{selectedEmployee.bloodGroup || 'Not provided'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="details-section">
+                                        <h4>Professional Information</h4>
+                                        <div className="details-grid">
+                                            <div className="detail-item">
+                                                <FaBuilding />
+                                                <div>
+                                                    <label>Department</label>
+                                                    <p>{selectedEmployee.department || 'Not assigned'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaBriefcase />
+                                                <div>
+                                                    <label>Designation</label>
+                                                    <p>{selectedEmployee.designation || 'Not assigned'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaUserTie />
+                                                <div>
+                                                    <label>Manager</label>
+                                                    <p>{selectedEmployee.managerName || 'No manager assigned'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaMoneyBillWave />
+                                                <div>
+                                                    <label>Salary</label>
+                                                    <p>{formatCurrency(selectedEmployee.salary)}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="details-section">
+                                        <h4>Documents & IDs</h4>
+                                        <div className="details-grid">
+                                            <div className="detail-item">
+                                                <FaIdCard />
+                                                <div>
+                                                    <label>PAN Card Number</label>
+                                                    <p>{selectedEmployee.panNumber ? maskString(selectedEmployee.panNumber, 2, 2) : 'Not provided'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaAadhar />
+                                                <div>
+                                                    <label>Aadhar Number</label>
+                                                    <p>{selectedEmployee.aadharNumber ? maskString(selectedEmployee.aadharNumber, 2, 2) : 'Not provided'}</p>
+                                                </div>
+                                            </div>
+                                            {selectedEmployee.joinLetter && (
+                                                <div className="detail-item">
+                                                    <FaFileAlt />
+                                                    <div>
+                                                        <label>Join Letter</label>
+                                                        <a href={selectedEmployee.joinLetter} target="_blank" rel="noopener noreferrer" className="file-link">
+                                                            View Document
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="details-section">
+                                        <h4>Bank Details</h4>
+                                        <div className="details-grid">
+                                            <div className="detail-item">
+                                                <FaUniversity />
+                                                <div>
+                                                    <label>Bank Name</label>
+                                                    <p>{selectedEmployee.bankName || 'Not provided'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaCreditCard />
+                                                <div>
+                                                    <label>Account Number</label>
+                                                    <p>{selectedEmployee.bankAccountNo ? maskString(selectedEmployee.bankAccountNo, 2, 4) : 'Not provided'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaIdCard />
+                                                <div>
+                                                    <label>IFSC Code</label>
+                                                    <p>{selectedEmployee.bankIfsc || 'Not provided'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="detail-item">
+                                                <FaUserTie />
+                                                <div>
+                                                    <label>Account Holder Name</label>
+                                                    <p>{selectedEmployee.accountHolderName || 'Not provided'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {selectedEmployee.role === 'MANAGER' && selectedEmployee.assignedEmployeesCount > 0 && (
+                                    <div className="assigned-section">
+                                        <h4>Team Members ({selectedEmployee.assignedEmployeesCount})</h4>
+                                        <div className="team-list">
+                                            {selectedEmployee.assignedEmployees?.map(member => (
+                                                <div key={member.employeeId} className="team-member">
+                                                    <div className="team-avatar">
+                                                        {member.name?.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="team-name">{member.name}</div>
+                                                        <div className="team-role">{member.designation || member.role}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <button className="close-btn" onClick={() => setShowDetailModal(false)}>Close</button>
+                                <button className="edit-btn" onClick={() => {
+                                    setShowDetailModal(false);
+                                    handleEditClick(selectedEmployee);
+                                }}>
+                                    <FaEdit /> Edit Employee
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* ========== EDIT EMPLOYEE MODAL ========== */}
+            {
+                showEditModal && editEmployee && (
+                    <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+                        <div className="edit-modal edit-modal--large" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h3><FaEdit /> Edit Employee</h3>
+                                <button className="modal-close" onClick={() => setShowEditModal(false)}>
+                                    <FaTimes />
+                                </button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="employee-info">
+                                    <div className="employee-avatar-large">
+                                        {editEmployee.name?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h4>{editEmployee.name}</h4>
+                                        <p>{editEmployee.employeeId} • {editEmployee.role}</p>
+                                    </div>
+                                </div>
+
+                                {/* Password Reset Button */}
+                                <div className="password-reset-section">
+                                    <button
+                                        className="password-reset-btn"
+                                        onClick={() => handlePasswordResetClick(editEmployee)}
+                                    >
+                                        <FaKey /> Reset Password
+                                    </button>
+                                    {/* <small>Send password reset link to employee</small> */}
+                                </div>
+
+                                <div className="edit-tabs">
+                                    {/* Personal Information */}
+                                    <div className="edit-section">
+                                        <h4>Personal Information</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label><FaPhone /> Phone Number</label>
+                                                <input
+                                                    type="tel"
+                                                    value={editForm.phone}
+                                                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                                    placeholder="Enter phone number"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label><FaTint /> Blood Group</label>
+                                                <select
+                                                    value={editForm.bloodGroup}
+                                                    onChange={(e) => setEditForm({ ...editForm, bloodGroup: e.target.value })}
+                                                >
+                                                    {bloodGroupOptions.map(bg => (
+                                                        <option key={bg} value={bg}>{bg || 'Select Blood Group'}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label><FaMapMarkerAlt /> Address</label>
+                                            <textarea
+                                                value={editForm.address}
+                                                onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                                                rows="2"
+                                                placeholder="Enter address"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Professional Information */}
+                                    <div className="edit-section">
+                                        <h4>Professional Information</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label><FaBuilding /> Department</label>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.department}
+                                                    onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                                                    placeholder="Department"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label><FaBriefcase /> Designation</label>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.designation}
+                                                    onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
+                                                    placeholder="Designation"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {editEmployee.role === 'EMPLOYEE' && (
+                                            <div className="form-group">
+                                                <label><FaUserTie /> Assign Manager</label>
+                                                <select
+                                                    value={editForm.managerId}
+                                                    onChange={(e) => setEditForm({ ...editForm, managerId: e.target.value })}
+                                                >
+                                                    <option value="">No Manager</option>
+                                                    {managers.map(mgr => (
+                                                        <option key={mgr.employeeId} value={mgr.employeeId}>
+                                                            {mgr.name} ({mgr.employeeId})
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </div>
                                         )}
                                     </div>
-                                </div>
 
-                                <div className="details-section">
-                                    <h4>Bank Details</h4>
-                                    <div className="details-grid">
-                                        <div className="detail-item">
-                                            <FaUniversity />
-                                            <div>
-                                                <label>Bank Name</label>
-                                                <p>{selectedEmployee.bankName || 'Not provided'}</p>
+                                    {/* Documents & IDs */}
+                                    <div className="edit-section">
+                                        <h4>Documents & IDs</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label><FaIdCard /> PAN Card Number</label>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.panNumber}
+                                                    onChange={(e) => setEditForm({ ...editForm, panNumber: e.target.value.toUpperCase() })}
+                                                    placeholder="Enter PAN number (e.g., ABCDE1234F)"
+                                                    maxLength="10"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label><FaAadhar /> Aadhar Number</label>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.aadharNumber}
+                                                    onChange={(e) => setEditForm({ ...editForm, aadharNumber: e.target.value })}
+                                                    placeholder="Enter 12-digit Aadhar number"
+                                                    maxLength="12"
+                                                />
                                             </div>
                                         </div>
-                                        <div className="detail-item">
-                                            <FaCreditCard />
-                                            <div>
-                                                <label>Account Number</label>
-                                                <p>{selectedEmployee.bankAccountNo ? maskString(selectedEmployee.bankAccountNo, 2, 4) : 'Not provided'}</p>
+                                        <div className="form-group">
+                                            <label><FaFileUpload /> Join Letter (PDF)</label>
+                                            <div className="file-upload-area">
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf"
+                                                    onChange={handleFileSelect}
+                                                    className="file-input"
+                                                />
+                                                {editForm.joinLetter && !selectedFile && (
+                                                    <div className="existing-file">
+                                                        <FaFileAlt />
+                                                        <a href={editForm.joinLetter} target="_blank" rel="noopener noreferrer">View existing join letter</a>
+                                                        <small>Upload new file to replace</small>
+                                                    </div>
+                                                )}
+                                                {selectedFile && (
+                                                    <div className="selected-file">
+                                                        <FaFileAlt />
+                                                        <span>{selectedFile.name}</span>
+                                                        <button onClick={() => setSelectedFile(null)}>Remove</button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="detail-item">
-                                            <FaIdCard />
-                                            <div>
-                                                <label>IFSC Code</label>
-                                                <p>{selectedEmployee.bankIfsc || 'Not provided'}</p>
+                                    </div>
+
+                                    {/* Bank Details */}
+                                    <div className="edit-section">
+                                        <h4>Bank Details</h4>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label><FaUniversity /> Bank Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.bankName}
+                                                    onChange={(e) => setEditForm({ ...editForm, bankName: e.target.value })}
+                                                    placeholder="Bank name"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label><FaCreditCard /> Account Number</label>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.bankAccountNo}
+                                                    onChange={(e) => setEditForm({ ...editForm, bankAccountNo: e.target.value })}
+                                                    placeholder="Bank account number"
+                                                />
                                             </div>
                                         </div>
-                                        <div className="detail-item">
-                                            <FaUserTie />
-                                            <div>
-                                                <label>Account Holder Name</label>
-                                                <p>{selectedEmployee.accountHolderName || 'Not provided'}</p>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label><FaIdCard /> IFSC Code</label>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.bankIfsc}
+                                                    onChange={(e) => setEditForm({ ...editForm, bankIfsc: e.target.value.toUpperCase() })}
+                                                    placeholder="IFSC code (e.g., SBIN0001234)"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label><FaUserTie /> Account Holder Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={editForm.accountHolderName}
+                                                    onChange={(e) => setEditForm({ ...editForm, accountHolderName: e.target.value })}
+                                                    placeholder="Name as per bank account"
+                                                />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            {selectedEmployee.role === 'MANAGER' && selectedEmployee.assignedEmployeesCount > 0 && (
-                                <div className="assigned-section">
-                                    <h4>Team Members ({selectedEmployee.assignedEmployeesCount})</h4>
-                                    <div className="team-list">
-                                        {selectedEmployee.assignedEmployees?.map(member => (
-                                            <div key={member.employeeId} className="team-member">
-                                                <div className="team-avatar">
-                                                    {member.name?.charAt(0).toUpperCase()}
-                                                </div>
-                                                <div>
-                                                    <div className="team-name">{member.name}</div>
-                                                    <div className="team-role">{member.designation || member.role}</div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <div className="modal-footer">
-                            <button className="close-btn" onClick={() => setShowDetailModal(false)}>Close</button>
-                            <button className="edit-btn" onClick={() => {
-                                setShowDetailModal(false);
-                                handleEditClick(selectedEmployee);
-                            }}>
-                                <FaEdit /> Edit Employee
-                            </button>
+                            <div className="modal-footer">
+                                <button className="cancel-btn" onClick={() => setShowEditModal(false)}>Cancel</button>
+                                <button className="save-btn" onClick={handleUpdateEmployee} disabled={updating}>
+                                    {updating ? <FaSpinner className="spinning" /> : <FaSave />}
+                                    {updating ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {/* ========== EDIT EMPLOYEE MODAL ========== */}
-            {showEditModal && editEmployee && (
-                <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-                    <div className="edit-modal edit-modal--large" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3><FaEdit /> Edit Employee</h3>
-                            <button className="modal-close" onClick={() => setShowEditModal(false)}>
-                                <FaTimes />
-                            </button>
-                        </div>
-                        <div className="modal-body">
-                            <div className="employee-info">
-                                <div className="employee-avatar-large">
-                                    {editEmployee.name?.charAt(0).toUpperCase()}
+            {/* ========== PASSWORD RESET MODAL ========== */}
+            {
+                showPasswordModal && passwordResetEmployee && (
+                    <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
+                        <div className="password-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h3><FaLock /> Reset Password</h3>
+                                <button className="modal-close" onClick={() => setShowPasswordModal(false)}>
+                                    <FaTimes />
+                                </button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="password-reset-info">
+                                    <div className="reset-employee">
+                                        <div className="reset-avatar">
+                                            {passwordResetEmployee.name?.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <h4>{passwordResetEmployee.name}</h4>
+                                            <p>{passwordResetEmployee.employeeId} • {passwordResetEmployee.role}</p>
+                                        </div>
+                                    </div>
+                                    <div className="reset-note">
+                                        <FaInfoCircle />
+                                        <p>The employee will receive an email notification that their password has been updated. <strong>The new password will NOT be shared in the email.</strong></p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4>{editEmployee.name}</h4>
-                                    <p>{editEmployee.employeeId} • {editEmployee.role}</p>
+
+                                <div className="form-group">
+                                    <label><FaKey /> New Password</label>
+                                    <input
+                                        type="password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        placeholder="Enter new password (min 6 characters)"
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label><FaKey /> Confirm Password</label>
+                                    <input
+                                        type="password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        placeholder="Confirm new password"
+                                    />
                                 </div>
                             </div>
-
-                            <div className="edit-tabs">
-                                {/* Personal Information */}
-                                <div className="edit-section">
-                                    <h4>Personal Information</h4>
-                                    <div className="form-row">
-                                        <div className="form-group">
-                                            <label><FaPhone /> Phone Number</label>
-                                            <input
-                                                type="tel"
-                                                value={editForm.phone}
-                                                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                                placeholder="Enter phone number"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label><FaTint /> Blood Group</label>
-                                            <select
-                                                value={editForm.bloodGroup}
-                                                onChange={(e) => setEditForm({ ...editForm, bloodGroup: e.target.value })}
-                                            >
-                                                {bloodGroupOptions.map(bg => (
-                                                    <option key={bg} value={bg}>{bg || 'Select Blood Group'}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label><FaMapMarkerAlt /> Address</label>
-                                        <textarea
-                                            value={editForm.address}
-                                            onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                                            rows="2"
-                                            placeholder="Enter address"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Professional Information */}
-                                <div className="edit-section">
-                                    <h4>Professional Information</h4>
-                                    <div className="form-row">
-                                        <div className="form-group">
-                                            <label><FaBuilding /> Department</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.department}
-                                                onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
-                                                placeholder="Department"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label><FaBriefcase /> Designation</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.designation}
-                                                onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
-                                                placeholder="Designation"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {editEmployee.role === 'EMPLOYEE' && (
-                                        <div className="form-group">
-                                            <label><FaUserTie /> Assign Manager</label>
-                                            <select
-                                                value={editForm.managerId}
-                                                onChange={(e) => setEditForm({ ...editForm, managerId: e.target.value })}
-                                            >
-                                                <option value="">No Manager</option>
-                                                {managers.map(mgr => (
-                                                    <option key={mgr.employeeId} value={mgr.employeeId}>
-                                                        {mgr.name} ({mgr.employeeId})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Documents & IDs */}
-                                <div className="edit-section">
-                                    <h4>Documents & IDs</h4>
-                                    <div className="form-row">
-                                        <div className="form-group">
-                                            <label><FaIdCard /> PAN Card Number</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.panNumber}
-                                                onChange={(e) => setEditForm({ ...editForm, panNumber: e.target.value.toUpperCase() })}
-                                                placeholder="Enter PAN number (e.g., ABCDE1234F)"
-                                                maxLength="10"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label><FaAadhar /> Aadhar Number</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.aadharNumber}
-                                                onChange={(e) => setEditForm({ ...editForm, aadharNumber: e.target.value })}
-                                                placeholder="Enter 12-digit Aadhar number"
-                                                maxLength="12"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label><FaFileUpload /> Join Letter (PDF)</label>
-                                        <div className="file-upload-area">
-                                            <input
-                                                type="file"
-                                                accept=".pdf"
-                                                onChange={handleFileSelect}
-                                                className="file-input"
-                                            />
-                                            {editForm.joinLetter && !selectedFile && (
-                                                <div className="existing-file">
-                                                    <FaFileAlt />
-                                                    <a href={editForm.joinLetter} target="_blank" rel="noopener noreferrer">View existing join letter</a>
-                                                    <small>Upload new file to replace</small>
-                                                </div>
-                                            )}
-                                            {selectedFile && (
-                                                <div className="selected-file">
-                                                    <FaFileAlt />
-                                                    <span>{selectedFile.name}</span>
-                                                    <button onClick={() => setSelectedFile(null)}>Remove</button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Bank Details */}
-                                <div className="edit-section">
-                                    <h4>Bank Details</h4>
-                                    <div className="form-row">
-                                        <div className="form-group">
-                                            <label><FaUniversity /> Bank Name</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.bankName}
-                                                onChange={(e) => setEditForm({ ...editForm, bankName: e.target.value })}
-                                                placeholder="Bank name"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label><FaCreditCard /> Account Number</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.bankAccountNo}
-                                                onChange={(e) => setEditForm({ ...editForm, bankAccountNo: e.target.value })}
-                                                placeholder="Bank account number"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="form-row">
-                                        <div className="form-group">
-                                            <label><FaIdCard /> IFSC Code</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.bankIfsc}
-                                                onChange={(e) => setEditForm({ ...editForm, bankIfsc: e.target.value.toUpperCase() })}
-                                                placeholder="IFSC code (e.g., SBIN0001234)"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label><FaUserTie /> Account Holder Name</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.accountHolderName}
-                                                onChange={(e) => setEditForm({ ...editForm, accountHolderName: e.target.value })}
-                                                placeholder="Name as per bank account"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
+                            <div className="modal-footer">
+                                <button className="cancel-btn" onClick={() => setShowPasswordModal(false)}>Cancel</button>
+                                <button className="save-btn" onClick={handlePasswordReset} disabled={resettingPassword}>
+                                    {resettingPassword ? <FaSpinner className="spinning" /> : <FaSave />}
+                                    {resettingPassword ? 'Resetting...' : 'Reset Password'}
+                                </button>
                             </div>
-                        </div>
-                        <div className="modal-footer">
-                            <button className="cancel-btn" onClick={() => setShowEditModal(false)}>Cancel</button>
-                            <button className="save-btn" onClick={handleUpdateEmployee} disabled={updating}>
-                                {updating ? <FaSpinner className="spinning" /> : <FaSave />}
-                                {updating ? 'Saving...' : 'Save Changes'}
-                            </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Confirmation Modal */}
-            {confirmModal.show && (
-                <div className="modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
-                    <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="confirm-modal__header">
-                            <div className="confirm-modal__icon">
-                                <FaExclamationTriangle />
+            {
+                confirmModal.show && (
+                    <div className="modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
+                        <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="confirm-modal__header">
+                                <div className="confirm-modal__icon">
+                                    <FaExclamationTriangle />
+                                </div>
+                                <button className="confirm-modal__close" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
+                                    <FaTimes />
+                                </button>
                             </div>
-                            <button className="confirm-modal__close" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
-                                <FaTimes />
-                            </button>
-                        </div>
-                        <div className="confirm-modal__body">
-                            <h3>{confirmModal.title}</h3>
-                            <p>{confirmModal.message}</p>
-                        </div>
-                        <div className="confirm-modal__footer">
-                            <button className="confirm-modal__cancel" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
-                                Cancel
-                            </button>
-                            <button className="confirm-modal__confirm" onClick={confirmModal.onConfirm}>
-                                Confirm
-                            </button>
+                            <div className="confirm-modal__body">
+                                <h3>{confirmModal.title}</h3>
+                                <p>{confirmModal.message}</p>
+                            </div>
+                            <div className="confirm-modal__footer">
+                                <button className="confirm-modal__cancel" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
+                                    Cancel
+                                </button>
+                                <button className="confirm-modal__confirm" onClick={confirmModal.onConfirm}>
+                                    Confirm
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
