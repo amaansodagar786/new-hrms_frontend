@@ -7,7 +7,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import {
     FaUser, FaEnvelope, FaBuilding, FaBriefcase,
     FaPhone, FaMapMarkerAlt, FaIdCard, FaMoneyBillWave,
-    FaEdit, FaSave, FaTimes, FaShieldAlt, FaInfoCircle
+    FaEdit, FaSave, FaTimes, FaShieldAlt, FaInfoCircle,
+    FaCreditCard, FaUniversity, FaTint, FaFileAlt, FaIdCard as FaAadhar
 } from 'react-icons/fa';
 import './EmployeeProfile.scss';
 
@@ -66,6 +67,11 @@ const EmployeeProfile = () => {
         MANAGER: { cls: 'ep-role--manager', label: 'Manager' },
         EMPLOYEE: { cls: 'ep-role--employee', label: 'Employee' },
     }[role] || { cls: '', label: role });
+
+    const maskString = (str, start = 2, end = 2) => {
+        if (!str || str.length <= start + end) return str || '—';
+        return str.slice(0, start) + '****' + str.slice(-end);
+    };
 
     const viewFields = [
         { icon: <FaIdCard />, label: 'Employee ID', value: user?.employeeId, locked: true },
@@ -137,22 +143,22 @@ const EmployeeProfile = () => {
                     </div>
                 </div>
 
-                {/* Right — Details / Edit */}
+                {/* Right — Details */}
                 <div className="ep-main">
-
-                    {!isEditing ? (
-                        // ── VIEW MODE ─────────────────────────────────
-                        <div className="ep-card">
-                            <div className="ep-card__header">
-                                <div className="ep-card__title-wrap">
-                                    <div className="ep-card__icon"><FaShieldAlt /></div>
-                                    <div>
-                                        <h3>Personal Information</h3>
-                                        <p>Your employment and contact details</p>
-                                    </div>
+                    <div className="ep-card">
+                        <div className="ep-card__header">
+                            <div className="ep-card__title-wrap">
+                                <div className="ep-card__icon"><FaShieldAlt /></div>
+                                <div>
+                                    <h3>Personal Information</h3>
+                                    <p>Your employment and contact details</p>
                                 </div>
                             </div>
+                        </div>
 
+                        {/* Personal Information Section */}
+                        <div className="ep-details-section">
+                            <h4>Basic Information</h4>
                             <div className="ep-details-grid">
                                 {viewFields.map((f, i) => (
                                     <div key={i} className="ep-detail-item">
@@ -169,77 +175,148 @@ const EmployeeProfile = () => {
                             </div>
                         </div>
 
-                    ) : (
-                        // ── EDIT MODE ─────────────────────────────────
-                        <div className="ep-card">
-                            <div className="ep-card__header">
-                                <div className="ep-card__title-wrap">
-                                    <div className="ep-card__icon ep-card__icon--edit"><FaEdit /></div>
-                                    <div>
-                                        <h3>Edit Profile</h3>
-                                        <p>Update your contact information</p>
+                        {/* Documents & IDs Section */}
+                        <div className="ep-details-section">
+                            <h4>Documents & IDs</h4>
+                            <div className="ep-details-grid">
+                                <div className="ep-detail-item">
+                                    <div className="ep-detail-item__icon"><FaIdCard /></div>
+                                    <div className="ep-detail-item__content">
+                                        <label>PAN Card Number</label>
+                                        <p>{user?.panNumber ? maskString(user.panNumber, 2, 2) : 'Not provided'}</p>
                                     </div>
                                 </div>
+                                <div className="ep-detail-item">
+                                    <div className="ep-detail-item__icon"><FaAadhar /></div>
+                                    <div className="ep-detail-item__content">
+                                        <label>Aadhar Number</label>
+                                        <p>{user?.aadharNumber ? maskString(user.aadharNumber, 2, 2) : 'Not provided'}</p>
+                                    </div>
+                                </div>
+                                <div className="ep-detail-item">
+                                    <div className="ep-detail-item__icon"><FaTint /></div>
+                                    <div className="ep-detail-item__content">
+                                        <label>Blood Group</label>
+                                        <p>{user?.bloodGroup || 'Not provided'}</p>
+                                    </div>
+                                </div>
+                                {user?.joinLetter && (
+                                    <div className="ep-detail-item">
+                                        <div className="ep-detail-item__icon"><FaFileAlt /></div>
+                                        <div className="ep-detail-item__content">
+                                            <label>Join Letter</label>
+                                            <a href={user.joinLetter} target="_blank" rel="noopener noreferrer" className="ep-file-link">
+                                                View Document
+                                            </a>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-
-                            {/* Info notice */}
-                            <div className="ep-notice">
-                                <FaInfoCircle />
-                                <p>Only <strong>phone</strong> and <strong>address</strong> can be updated. Contact HR for other changes.</p>
-                            </div>
-
-                            <form onSubmit={formik.handleSubmit} className="ep-form">
-
-                                {/* Phone */}
-                                <div className={`ep-field ${formik.touched.phone && formik.errors.phone ? 'ep-field--error' : ''}`}>
-                                    <label>Phone Number</label>
-                                    <div className="ep-field__wrap">
-                                        <FaPhone className="ep-field__icon" />
-                                        <input
-                                            type="tel"
-                                            name="phone"
-                                            placeholder="Enter 10-digit mobile number"
-                                            value={formik.values.phone}
-                                            onChange={formik.handleChange}
-                                            onBlur={formik.handleBlur}
-                                        />
-                                    </div>
-                                    {formik.touched.phone && formik.errors.phone && (
-                                        <span className="ep-field__err">{formik.errors.phone}</span>
-                                    )}
-                                </div>
-
-                                {/* Address */}
-                                <div className={`ep-field ${formik.touched.address && formik.errors.address ? 'ep-field--error' : ''}`}>
-                                    <label>Address</label>
-                                    <div className="ep-field__wrap ep-field__wrap--textarea">
-                                        <FaMapMarkerAlt className="ep-field__icon ep-field__icon--top" />
-                                        <textarea
-                                            name="address"
-                                            placeholder="Enter your full address"
-                                            value={formik.values.address}
-                                            onChange={formik.handleChange}
-                                            onBlur={formik.handleBlur}
-                                            rows="4"
-                                        />
-                                    </div>
-                                    {formik.touched.address && formik.errors.address && (
-                                        <span className="ep-field__err">{formik.errors.address}</span>
-                                    )}
-                                </div>
-
-                                {/* Actions */}
-                                <div className="ep-form__actions">
-                                    <button type="button" className="ep-btn ep-btn--ghost" onClick={handleCancel}>
-                                        <FaTimes /> Cancel
-                                    </button>
-                                    <button type="submit" className="ep-btn ep-btn--primary">
-                                        <FaSave /> Save Changes
-                                    </button>
-                                </div>
-                            </form>
                         </div>
-                    )}
+
+                        {/* Bank Details Section */}
+                        <div className="ep-details-section">
+                            <h4>Bank Details</h4>
+                            <div className="ep-details-grid">
+                                <div className="ep-detail-item">
+                                    <div className="ep-detail-item__icon"><FaUniversity /></div>
+                                    <div className="ep-detail-item__content">
+                                        <label>Bank Name</label>
+                                        <p>{user?.bankName || 'Not provided'}</p>
+                                    </div>
+                                </div>
+                                <div className="ep-detail-item">
+                                    <div className="ep-detail-item__icon"><FaCreditCard /></div>
+                                    <div className="ep-detail-item__content">
+                                        <label>Account Number</label>
+                                        <p>{user?.bankAccountNo ? maskString(user.bankAccountNo, 2, 4) : 'Not provided'}</p>
+                                    </div>
+                                </div>
+                                <div className="ep-detail-item">
+                                    <div className="ep-detail-item__icon"><FaIdCard /></div>
+                                    <div className="ep-detail-item__content">
+                                        <label>IFSC Code</label>
+                                        <p>{user?.bankIfsc || 'Not provided'}</p>
+                                    </div>
+                                </div>
+                                <div className="ep-detail-item">
+                                    <div className="ep-detail-item__icon"><FaUser /></div>
+                                    <div className="ep-detail-item__content">
+                                        <label>Account Holder Name</label>
+                                        <p>{user?.accountHolderName || 'Not provided'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Edit Mode (Only for phone & address) */}
+                        {isEditing && (
+                            <div className="ep-edit-section">
+                                <div className="ep-notice">
+                                    <FaInfoCircle />
+                                    <p>Only <strong>phone</strong> and <strong>address</strong> can be updated. Contact HR for other changes.</p>
+                                </div>
+
+                                <form onSubmit={formik.handleSubmit} className="ep-form">
+                                    {/* Phone */}
+                                    <div className={`ep-field ${formik.touched.phone && formik.errors.phone ? 'ep-field--error' : ''}`}>
+                                        <label>Phone Number</label>
+                                        <div className="ep-field__wrap">
+                                            <FaPhone className="ep-field__icon" />
+                                            <input
+                                                type="tel"
+                                                name="phone"
+                                                placeholder="Enter 10-digit mobile number"
+                                                value={formik.values.phone}
+                                                onChange={formik.handleChange}
+                                                onBlur={formik.handleBlur}
+                                            />
+                                        </div>
+                                        {formik.touched.phone && formik.errors.phone && (
+                                            <span className="ep-field__err">{formik.errors.phone}</span>
+                                        )}
+                                    </div>
+
+                                    {/* Address */}
+                                    <div className={`ep-field ${formik.touched.address && formik.errors.address ? 'ep-field--error' : ''}`}>
+                                        <label>Address</label>
+                                        <div className="ep-field__wrap ep-field__wrap--textarea">
+                                            <FaMapMarkerAlt className="ep-field__icon ep-field__icon--top" />
+                                            <textarea
+                                                name="address"
+                                                placeholder="Enter your full address"
+                                                value={formik.values.address}
+                                                onChange={formik.handleChange}
+                                                onBlur={formik.handleBlur}
+                                                rows="4"
+                                            />
+                                        </div>
+                                        {formik.touched.address && formik.errors.address && (
+                                            <span className="ep-field__err">{formik.errors.address}</span>
+                                        )}
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="ep-form__actions">
+                                        <button type="button" className="ep-btn ep-btn--ghost" onClick={handleCancel}>
+                                            <FaTimes /> Cancel
+                                        </button>
+                                        <button type="submit" className="ep-btn ep-btn--primary">
+                                            <FaSave /> Save Changes
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        )}
+
+                        {!isEditing && (
+                            <div className="ep-card__footer">
+                                <button className="ep-edit-btn" onClick={() => setIsEditing(true)}>
+                                    <FaEdit /> Edit Contact Info
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

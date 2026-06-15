@@ -698,3 +698,106 @@
         padding: 14px 12px;
     }
 }
+
+
+// ========== NEW STYLES FOR ADDITIONAL FIELDS ==========
+
+// Details Section
+.mp-details-section {
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    padding-left: 20px;
+    border-bottom: 1px solid var(--hrms-border);
+    
+    &:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    h4 {
+        font-family: var(--hrms-font-head);
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--hrms-text-secondary);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        &::before {
+            content: '';
+            width: 3px;
+            height: 16px;
+            background: var(--hrms-primary);
+            border-radius: 2px;
+        }
+    }
+}
+
+// File Link
+.mp-file-link {
+    color: var(--hrms-primary);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+// Edit Section in Card
+.mp-edit-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--hrms-border);
+}
+
+// Card Footer with Edit Button
+.mp-card__footer {
+    margin-top: 24px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-right: 20px;
+    border-top: 1px solid var(--hrms-border);
+    text-align: right;
+}
+
+.mp-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--hrms-primary), var(--hrms-primary-dark));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--hrms-font-head);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(90, 103, 242, 0.3);
+    }
+}
+
+// Responsive for new sections
+@media (max-width: 768px) {
+    .mp-details-section {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+    }
+    
+    .mp-card__footer {
+        text-align: center;
+    }
+    
+    .mp-edit-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

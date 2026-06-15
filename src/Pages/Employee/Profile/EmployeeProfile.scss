@@ -334,6 +334,38 @@
     }
 }
 
+// ─── Details Section (NEW) ────────────────────────────────────────────
+.ep-details-section {
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--hrms-border);
+
+    &:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    h4 {
+        font-family: var(--hrms-font-head);
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--hrms-text-secondary);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        &::before {
+            content: '';
+            width: 3px;
+            height: 16px;
+            background: var(--hrms-primary);
+            border-radius: 2px;
+        }
+    }
+}
+
 // ─── Details Grid ─────────────────────────────────────────────────────
 .ep-details-grid {
     display: grid;
@@ -401,6 +433,18 @@
     }
 }
 
+// ─── File Link (NEW) ──────────────────────────────────────────────────
+.ep-file-link {
+    color: var(--hrms-primary);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
 // ─── Locked badge ─────────────────────────────────────────────────────
 .ep-locked-badge {
     display: inline-flex;
@@ -442,6 +486,42 @@
             color: var(--hrms-text-primary);
             font-weight: 600;
         }
+    }
+}
+
+// ─── Edit Section (NEW) ───────────────────────────────────────────────
+.ep-edit-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--hrms-border);
+}
+
+// ─── Card Footer with Edit Button (NEW) ───────────────────────────────
+.ep-card__footer {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--hrms-border);
+    text-align: right;
+}
+
+.ep-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--hrms-primary), var(--hrms-primary-dark));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--hrms-font-head);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(90, 103, 242, 0.3);
     }
 }
 
@@ -690,6 +770,21 @@
 
     .ep-form__actions {
         flex-direction: column;
+    }
+
+    // NEW responsive styles
+    .ep-details-section {
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+    }
+
+    .ep-card__footer {
+        text-align: center;
+    }
+
+    .ep-edit-btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 

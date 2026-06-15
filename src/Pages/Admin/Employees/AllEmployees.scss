@@ -819,3 +819,229 @@
         margin: 16px;
     }
 }
+
+
+// ========== ADDITIONAL STYLES FOR NEW FIELDS ==========
+
+// Large Detail Modal
+.detail-modal--large {
+    max-width: 800px;
+    width: 90%;
+}
+
+// Edit Modal Large
+.edit-modal--large {
+    max-width: 700px;
+    width: 90%;
+}
+
+// Details Tabs
+.details-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.details-section {
+    background: #F8F9FF;
+    border-radius: 12px;
+    padding: 16px;
+    
+    h4 {
+        font-family: var(--hrms-font-head);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--hrms-text-secondary);
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--hrms-border);
+    }
+}
+
+// Edit Tabs
+.edit-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.edit-section {
+    background: #F8F9FF;
+    border-radius: 12px;
+    padding: 16px;
+    
+    h4 {
+        font-family: var(--hrms-font-head);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--hrms-text-secondary);
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--hrms-border);
+    }
+}
+
+// File Upload Area
+.file-upload-area {
+    .file-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px dashed var(--hrms-border);
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        
+        &:hover {
+            border-color: var(--hrms-primary);
+        }
+    }
+    
+    .existing-file {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: white;
+        border-radius: 8px;
+        margin-top: 8px;
+        
+        svg {
+            color: var(--hrms-primary);
+            font-size: 0.9rem;
+        }
+        
+        a {
+            color: var(--hrms-primary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+        
+        small {
+            font-size: 0.65rem;
+            color: var(--hrms-text-muted);
+            margin-left: auto;
+        }
+    }
+    
+    .selected-file {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: white;
+        border-radius: 8px;
+        margin-top: 8px;
+        
+        svg {
+            color: var(--hrms-success);
+            font-size: 0.9rem;
+        }
+        
+        span {
+            font-size: 0.8rem;
+            color: var(--hrms-text-primary);
+            flex: 1;
+        }
+        
+        button {
+            background: rgba(239, 68, 68, 0.1);
+            border: none;
+            color: var(--hrms-danger);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            
+            &:hover {
+                background: rgba(239, 68, 68, 0.2);
+            }
+        }
+    }
+}
+
+// File Link in Details Modal
+.file-link {
+    color: var(--hrms-primary);
+    text-decoration: none;
+    font-size: 0.75rem;
+    
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+// Profile Badges Container
+.profile-badges {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+// Additional Detail Item Styles for New Fields
+.detail-item {
+    .file-link {
+        display: inline-block;
+        margin-top: 4px;
+    }
+}
+
+// Form Row Adjustments
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+// Responsive adjustments for new sections
+@media (max-width: 768px) {
+    .detail-modal--large,
+    .edit-modal--large {
+        width: 95%;
+        margin: 16px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .details-section,
+    .edit-section {
+        padding: 12px;
+    }
+    
+    .file-upload-area {
+        .existing-file,
+        .selected-file {
+            flex-wrap: wrap;
+            
+            small {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            button {
+                margin-left: auto;
+            }
+        }
+    }
+}
+
+// Small screen adjustments
+@media (max-width: 480px) {
+    .details-tabs,
+    .edit-tabs {
+        gap: 16px;
+    }
+    
+    .profile-badges {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

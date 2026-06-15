@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { 
-  FaUsers, FaUserCheck, FaUserClock, FaTasks, 
+import {
+  FaUsers, FaUserCheck, FaUserClock, FaTasks,
   FaCalendarAlt, FaStar, FaChartLine, FaClock,
   FaCheckCircle, FaTimesCircle, FaSpinner,
   FaMoneyBillWave, FaBuilding, FaEnvelope,
@@ -33,7 +33,7 @@ const AdminDashboard = () => {
         const response = await axios.get(`${apiUrl}/admin/dashboard`, {
           withCredentials: true,
         });
-        
+
         if (response.data.success) {
           setDashboardData(response.data.dashboard);
         } else {
@@ -115,7 +115,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="admin-stat-card">
           <div className="admin-stat-card__icon admin-icon-new">
             <FaUserCheck />
@@ -126,7 +126,7 @@ const AdminDashboard = () => {
             <span className="admin-stat-card__sub">Last 30 days</span>
           </div>
         </div>
-        
+
         <div className="admin-stat-card">
           <div className="admin-stat-card__icon admin-icon-present">
             <FaClock />
@@ -137,7 +137,7 @@ const AdminDashboard = () => {
             <span className="admin-stat-card__sub">{attendanceStats?.attendancePercentage || 0}% of total</span>
           </div>
         </div>
-        
+
         <div className="admin-stat-card">
           <div className="admin-stat-card__icon admin-icon-leave">
             <FaUserClock />
@@ -151,7 +151,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="admin-stat-card">
           <div className="admin-stat-card__icon admin-icon-salary">
             <FaMoneyBillWave />
@@ -162,7 +162,7 @@ const AdminDashboard = () => {
             <span className="admin-stat-card__sub">Avg: ₹{(salaryStats?.averageSalary / 1000).toFixed(0)}K</span>
           </div>
         </div>
-        
+
         <div className="admin-stat-card">
           <div className="admin-stat-card__icon admin-icon-task">
             <FaTasks />
@@ -180,16 +180,16 @@ const AdminDashboard = () => {
 
       {/* Two Column Layout */}
       <div className="admin-two-column">
-        
+
         {/* LEFT COLUMN */}
         <div className="admin-left-col">
-          
+
           {/* Employee Distribution */}
           <div className="admin-card">
             <div className="admin-card__header">
               <h3><FaUsers /> Employee Distribution</h3>
             </div>
-            
+
             {/* Role Distribution */}
             <div className="admin-role-distribution">
               <h4>By Role</h4>
@@ -197,8 +197,8 @@ const AdminDashboard = () => {
                 <div className="admin-role-item">
                   <span className="admin-role-name">HR</span>
                   <div className="admin-role-bar-wrapper">
-                    <div 
-                      className="admin-role-bar" 
+                    <div
+                      className="admin-role-bar"
                       style={{ width: `${(employeeStats?.roleDistribution?.HR / employeeStats?.total) * 100}%` }}
                     ></div>
                   </div>
@@ -207,8 +207,8 @@ const AdminDashboard = () => {
                 <div className="admin-role-item">
                   <span className="admin-role-name">Manager</span>
                   <div className="admin-role-bar-wrapper">
-                    <div 
-                      className="admin-role-bar" 
+                    <div
+                      className="admin-role-bar"
                       style={{ width: `${(employeeStats?.roleDistribution?.MANAGER / employeeStats?.total) * 100}%` }}
                     ></div>
                   </div>
@@ -217,8 +217,8 @@ const AdminDashboard = () => {
                 <div className="admin-role-item">
                   <span className="admin-role-name">Employee</span>
                   <div className="admin-role-bar-wrapper">
-                    <div 
-                      className="admin-role-bar" 
+                    <div
+                      className="admin-role-bar"
                       style={{ width: `${(employeeStats?.roleDistribution?.EMPLOYEE / employeeStats?.total) * 100}%` }}
                     ></div>
                   </div>
@@ -226,7 +226,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Department Distribution */}
             <div className="admin-dept-distribution">
               <h4>By Department</h4>
@@ -235,8 +235,8 @@ const AdminDashboard = () => {
                   <div key={idx} className="admin-dept-item">
                     <span className="admin-dept-name">{dept}</span>
                     <div className="admin-dept-bar-wrapper">
-                      <div 
-                        className="admin-dept-bar" 
+                      <div
+                        className="admin-dept-bar"
                         style={{ width: `${(count / employeeStats?.total) * 100}%` }}
                       ></div>
                     </div>
@@ -299,7 +299,7 @@ const AdminDashboard = () => {
 
         {/* RIGHT COLUMN */}
         <div className="admin-right-col">
-          
+
           {/* Leave Trend */}
           <div className="admin-card">
             <div className="admin-card__header">
@@ -310,8 +310,8 @@ const AdminDashboard = () => {
                 <div key={idx} className="admin-trend-item">
                   <span className="admin-trend-month">{item.month}</span>
                   <div className="admin-trend-bar-wrapper">
-                    <div 
-                      className="admin-trend-bar" 
+                    <div
+                      className="admin-trend-bar"
                       style={{ height: `${(item.count / Math.max(...leaveStats.trend.map(t => t.count))) * 100}%` }}
                     ></div>
                   </div>
@@ -368,7 +368,7 @@ const AdminDashboard = () => {
             <div className="admin-card__header">
               <h3><FaExclamationTriangle /> Recent Activities</h3>
             </div>
-            
+
             {/* Pending Leaves */}
             {recentActivities?.pendingLeaves?.length > 0 && (
               <div className="admin-recent-section">
@@ -388,7 +388,7 @@ const AdminDashboard = () => {
                 ))}
               </div>
             )}
-            
+
             {/* Pending Tasks */}
             {recentActivities?.pendingTasks?.length > 0 && (
               <div className="admin-recent-section">

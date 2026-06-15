@@ -24,7 +24,13 @@ import {
     FaIdCard,
     FaMoneyBillWave,
     FaCalendarAlt,
-    FaExclamationTriangle
+    FaExclamationTriangle,
+    FaCreditCard,
+    FaUniversity,
+    FaFileAlt,
+    FaTint,
+    FaIdCard as FaAadhar,
+    FaFileUpload
 } from 'react-icons/fa';
 import './AllEmployees.scss';
 
@@ -33,7 +39,7 @@ const AllEmployees = () => {
     const [employees, setEmployees] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
-    
+
     // Filters
     const [filters, setFilters] = useState({
         role: '',
@@ -42,11 +48,11 @@ const AllEmployees = () => {
         search: '',
         page: 1,
     });
-    
+
     // View Details Modal
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
-    
+
     // Edit Modal
     const [showEditModal, setShowEditModal] = useState(false);
     const [editEmployee, setEditEmployee] = useState(null);
@@ -56,10 +62,22 @@ const AllEmployees = () => {
         department: '',
         designation: '',
         managerId: '',
+        panNumber: '',
+        aadharNumber: '',
+        bankAccountNo: '',
+        bankIfsc: '',
+        bankName: '',
+        accountHolderName: '',
+        bloodGroup: '',
+        joinLetter: '',
     });
     const [updating, setUpdating] = useState(false);
     const [managers, setManagers] = useState([]);
-    
+
+    // File upload state
+    const [uploadingFile, setUploadingFile] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+
     // Confirm Modal for Status Toggle
     const [confirmModal, setConfirmModal] = useState({
         show: false,
@@ -67,9 +85,12 @@ const AllEmployees = () => {
         message: '',
         onConfirm: null,
     });
-    
+
     const apiUrl = import.meta.env.VITE_API_URL;
     const userRole = localStorage.getItem('userRole');
+
+    // Blood group options
+    const bloodGroupOptions = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 
     // Fetch all employees
     const fetchAllEmployees = async () => {
@@ -81,7 +102,7 @@ const AllEmployees = () => {
             if (department) url += `&department=${department}`;
             if (status) url += `&status=${status}`;
             if (search) url += `&search=${search}`;
-            
+
             const response = await axios.get(url, { withCredentials: true });
             if (response.data.success) {
                 setEmployees(response.data.employees);
@@ -94,7 +115,7 @@ const AllEmployees = () => {
             setLoading(false);
         }
     };
-    
+
     // Fetch managers for dropdown
     const fetchManagers = async () => {
         try {
@@ -108,23 +129,34 @@ const AllEmployees = () => {
             console.error('Error fetching managers:', error);
         }
     };
-    
+
     useEffect(() => {
         fetchAllEmployees();
         fetchManagers();
     }, [filters]);
-    
+
     // Handle page change
     const handlePageChange = (newPage) => {
         setFilters({ ...filters, page: newPage });
     };
-    
+
     // Handle view details
     const handleViewDetails = async (employee) => {
-        setSelectedEmployee(employee);
-        setShowDetailModal(true);
+        try {
+            const response = await axios.get(`${apiUrl}/admin/employees/${employee.employeeId}`, {
+                withCredentials: true,
+            });
+            if (response.data.success) {
+                setSelectedEmployee(response.data.employee);
+                setShowDetailModal(true);
+            }
+        } catch (error) {
+            toast.error('Failed to fetch employee details');
+            setSelectedEmployee(employee);
+            setShowDetailModal(true);
+        }
     };
-    
+
     // Handle edit click
     const handleEditClick = (employee) => {
         setEditEmployee(employee);
@@ -134,19 +166,77 @@ const AllEmployees = () => {
             department: employee.department || '',
             designation: employee.designation || '',
             managerId: employee.managerId || '',
+            panNumber: employee.panNumber || '',
+            aadharNumber: employee.aadharNumber || '',
+            bankAccountNo: employee.bankAccountNo || '',
+            bankIfsc: employee.bankIfsc || '',
+            bankName: employee.bankName || '',
+            accountHolderName: employee.accountHolderName || '',
+            bloodGroup: employee.bloodGroup || '',
+            joinLetter: employee.joinLetter || '',
         });
+        setSelectedFile(null);
         setShowEditModal(true);
     };
-    
+
+    // Handle file upload
+    const handleFileUpload = async (file) => {
+        if (!file) return null;
+
+        const formData = new FormData();
+        formData.append('joinLetter', file);
+
+        try {
+            const response = await axios.post(`${apiUrl}/upload/join-letter`, formData, {
+                withCredentials: true,
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            if (response.data.success) {
+                return response.data.fileUrl;
+            }
+            return null;
+        } catch (error) {
+            toast.error('Failed to upload file');
+            return null;
+        }
+    };
+
+    // Handle file selection
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && file.type === 'application/pdf') {
+            setSelectedFile(file);
+            toast.info(`Selected: ${file.name}`);
+        } else {
+            toast.error('Please select a PDF file');
+            e.target.value = '';
+        }
+    };
+
     // Handle update employee
     const handleUpdateEmployee = async () => {
         if (!editEmployee) return;
-        
+
         setUpdating(true);
+
+        let joinLetterUrl = editForm.joinLetter;
+
+        if (selectedFile) {
+            const uploadedUrl = await handleFileUpload(selectedFile);
+            if (uploadedUrl) {
+                joinLetterUrl = uploadedUrl;
+            }
+        }
+
         try {
+            const updateData = {
+                ...editForm,
+                joinLetter: joinLetterUrl,
+            };
+
             const response = await axios.put(
                 `${apiUrl}/admin/employees/${editEmployee.employeeId}`,
-                editForm,
+                updateData,
                 { withCredentials: true }
             );
             if (response.data.success) {
@@ -160,7 +250,7 @@ const AllEmployees = () => {
             setUpdating(false);
         }
     };
-    
+
     // Handle toggle status
     const handleToggleStatus = (employee) => {
         const newStatus = !employee.isActive;
@@ -186,7 +276,7 @@ const AllEmployees = () => {
             }
         });
     };
-    
+
     const getRoleBadge = (role) => {
         const config = {
             HR: { class: 'role-hr', label: 'HR' },
@@ -196,14 +286,14 @@ const AllEmployees = () => {
         const c = config[role] || { class: 'role-default', label: role };
         return <span className={`role-badge ${c.class}`}>{c.label}</span>;
     };
-    
+
     const getStatusBadge = (isActive) => {
         if (isActive) {
             return <span className="status-badge status-active"><FaUserCheck /> Active</span>;
         }
         return <span className="status-badge status-inactive"><FaUserTimes /> Inactive</span>;
     };
-    
+
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-IN', {
             style: 'currency',
@@ -212,19 +302,24 @@ const AllEmployees = () => {
             maximumFractionDigits: 0,
         }).format(amount || 0);
     };
-    
+
     const formatDate = (date) => {
         if (!date) return '—';
         return new Date(date).toLocaleDateString();
     };
-    
+
+    const maskString = (str, start = 2, end = 2) => {
+        if (!str || str.length <= start + end) return str || '—';
+        return str.slice(0, start) + '****' + str.slice(-end);
+    };
+
     const roles = ['HR', 'MANAGER', 'EMPLOYEE'];
     const statusOptions = [
         { value: '', label: 'All' },
         { value: 'active', label: 'Active' },
         { value: 'inactive', label: 'Inactive' },
     ];
-    
+
     if (loading && employees.length === 0) {
         return (
             <div className="all-employees-loading">
@@ -233,17 +328,17 @@ const AllEmployees = () => {
             </div>
         );
     }
-    
+
     return (
         <div className="all-employees">
             <ToastContainer position="top-right" autoClose={3000} theme="colored" />
-            
+
             {/* Header */}
             <div className="employees-header">
                 <h1><FaUsers /> Employee Information</h1>
                 <p>View and manage all employees across the organization</p>
             </div>
-            
+
             {/* Filters */}
             <div className="filters-card">
                 <div className="filters-grid">
@@ -284,7 +379,7 @@ const AllEmployees = () => {
                     </div>
                 </div>
             </div>
-            
+
             {/* Employees Table */}
             <div className="employees-card">
                 <div className="table-header">
@@ -293,7 +388,7 @@ const AllEmployees = () => {
                         Total: {pagination.total} employees
                     </div>
                 </div>
-                
+
                 {employees.length === 0 ? (
                     <div className="empty-state">
                         <FaUsers />
@@ -350,7 +445,7 @@ const AllEmployees = () => {
                                 </tbody>
                             </table>
                         </div>
-                        
+
                         {/* Pagination */}
                         {pagination.totalPages > 1 && (
                             <div className="pagination">
@@ -366,11 +461,11 @@ const AllEmployees = () => {
                     </>
                 )}
             </div>
-            
-            {/* Employee Details Modal */}
+
+            {/* ========== EMPLOYEE DETAILS MODAL ========== */}
             {showDetailModal && selectedEmployee && (
                 <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
-                    <div className="detail-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="detail-modal detail-modal--large" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3>Employee Details</h3>
                             <button className="modal-close" onClick={() => setShowDetailModal(false)}>
@@ -384,77 +479,162 @@ const AllEmployees = () => {
                                 </div>
                                 <div className="profile-info">
                                     <h2>{selectedEmployee.name}</h2>
-                                    {getRoleBadge(selectedEmployee.role)}
-                                    {getStatusBadge(selectedEmployee.isActive)}
-                                </div>
-                            </div>
-                            
-                            <div className="details-grid">
-                                <div className="detail-item">
-                                    <FaIdCard />
-                                    <div>
-                                        <label>Employee ID</label>
-                                        <p>{selectedEmployee.employeeId}</p>
-                                    </div>
-                                </div>
-                                <div className="detail-item">
-                                    <FaEnvelope />
-                                    <div>
-                                        <label>Email</label>
-                                        <p>{selectedEmployee.email}</p>
-                                    </div>
-                                </div>
-                                <div className="detail-item">
-                                    <FaPhone />
-                                    <div>
-                                        <label>Phone</label>
-                                        <p>{selectedEmployee.phone || 'Not provided'}</p>
-                                    </div>
-                                </div>
-                                <div className="detail-item">
-                                    <FaMapMarkerAlt />
-                                    <div>
-                                        <label>Address</label>
-                                        <p>{selectedEmployee.address || 'Not provided'}</p>
-                                    </div>
-                                </div>
-                                <div className="detail-item">
-                                    <FaBuilding />
-                                    <div>
-                                        <label>Department</label>
-                                        <p>{selectedEmployee.department || 'Not assigned'}</p>
-                                    </div>
-                                </div>
-                                <div className="detail-item">
-                                    <FaBriefcase />
-                                    <div>
-                                        <label>Designation</label>
-                                        <p>{selectedEmployee.designation || 'Not assigned'}</p>
-                                    </div>
-                                </div>
-                                <div className="detail-item">
-                                    <FaUserTie />
-                                    <div>
-                                        <label>Manager</label>
-                                        <p>{selectedEmployee.managerName || 'No manager assigned'}</p>
-                                    </div>
-                                </div>
-                                <div className="detail-item">
-                                    <FaMoneyBillWave />
-                                    <div>
-                                        <label>Salary</label>
-                                        <p>{formatCurrency(selectedEmployee.salary)}</p>
-                                    </div>
-                                </div>
-                                <div className="detail-item">
-                                    <FaCalendarAlt />
-                                    <div>
-                                        <label>Join Date</label>
-                                        <p>{formatDate(selectedEmployee.joinDate)}</p>
+                                    <div className="profile-badges">
+                                        {getRoleBadge(selectedEmployee.role)}
+                                        {getStatusBadge(selectedEmployee.isActive)}
                                     </div>
                                 </div>
                             </div>
-                            
+
+                            <div className="details-tabs">
+                                <div className="details-section">
+                                    <h4>Personal Information</h4>
+                                    <div className="details-grid">
+                                        <div className="detail-item">
+                                            <FaIdCard />
+                                            <div>
+                                                <label>Employee ID</label>
+                                                <p>{selectedEmployee.employeeId}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaEnvelope />
+                                            <div>
+                                                <label>Email</label>
+                                                <p>{selectedEmployee.email}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaPhone />
+                                            <div>
+                                                <label>Phone</label>
+                                                <p>{selectedEmployee.phone || 'Not provided'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaMapMarkerAlt />
+                                            <div>
+                                                <label>Address</label>
+                                                <p>{selectedEmployee.address || 'Not provided'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaCalendarAlt />
+                                            <div>
+                                                <label>Join Date</label>
+                                                <p>{formatDate(selectedEmployee.joinDate)}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaTint />
+                                            <div>
+                                                <label>Blood Group</label>
+                                                <p>{selectedEmployee.bloodGroup || 'Not provided'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="details-section">
+                                    <h4>Professional Information</h4>
+                                    <div className="details-grid">
+                                        <div className="detail-item">
+                                            <FaBuilding />
+                                            <div>
+                                                <label>Department</label>
+                                                <p>{selectedEmployee.department || 'Not assigned'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaBriefcase />
+                                            <div>
+                                                <label>Designation</label>
+                                                <p>{selectedEmployee.designation || 'Not assigned'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaUserTie />
+                                            <div>
+                                                <label>Manager</label>
+                                                <p>{selectedEmployee.managerName || 'No manager assigned'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaMoneyBillWave />
+                                            <div>
+                                                <label>Salary</label>
+                                                <p>{formatCurrency(selectedEmployee.salary)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="details-section">
+                                    <h4>Documents & IDs</h4>
+                                    <div className="details-grid">
+                                        <div className="detail-item">
+                                            <FaIdCard />
+                                            <div>
+                                                <label>PAN Card Number</label>
+                                                <p>{selectedEmployee.panNumber ? maskString(selectedEmployee.panNumber, 2, 2) : 'Not provided'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaAadhar />
+                                            <div>
+                                                <label>Aadhar Number</label>
+                                                <p>{selectedEmployee.aadharNumber ? maskString(selectedEmployee.aadharNumber, 2, 2) : 'Not provided'}</p>
+                                            </div>
+                                        </div>
+                                        {selectedEmployee.joinLetter && (
+                                            <div className="detail-item">
+                                                <FaFileAlt />
+                                                <div>
+                                                    <label>Join Letter</label>
+                                                    <a href={selectedEmployee.joinLetter} target="_blank" rel="noopener noreferrer" className="file-link">
+                                                        View Document
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="details-section">
+                                    <h4>Bank Details</h4>
+                                    <div className="details-grid">
+                                        <div className="detail-item">
+                                            <FaUniversity />
+                                            <div>
+                                                <label>Bank Name</label>
+                                                <p>{selectedEmployee.bankName || 'Not provided'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaCreditCard />
+                                            <div>
+                                                <label>Account Number</label>
+                                                <p>{selectedEmployee.bankAccountNo ? maskString(selectedEmployee.bankAccountNo, 2, 4) : 'Not provided'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaIdCard />
+                                            <div>
+                                                <label>IFSC Code</label>
+                                                <p>{selectedEmployee.bankIfsc || 'Not provided'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="detail-item">
+                                            <FaUserTie />
+                                            <div>
+                                                <label>Account Holder Name</label>
+                                                <p>{selectedEmployee.accountHolderName || 'Not provided'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {selectedEmployee.role === 'MANAGER' && selectedEmployee.assignedEmployeesCount > 0 && (
                                 <div className="assigned-section">
                                     <h4>Team Members ({selectedEmployee.assignedEmployeesCount})</h4>
@@ -486,11 +666,11 @@ const AllEmployees = () => {
                     </div>
                 </div>
             )}
-            
-            {/* Edit Employee Modal */}
+
+            {/* ========== EDIT EMPLOYEE MODAL ========== */}
             {showEditModal && editEmployee && (
                 <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-                    <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="edit-modal edit-modal--large" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h3><FaEdit /> Edit Employee</h3>
                             <button className="modal-close" onClick={() => setShowEditModal(false)}>
@@ -507,64 +687,183 @@ const AllEmployees = () => {
                                     <p>{editEmployee.employeeId} • {editEmployee.role}</p>
                                 </div>
                             </div>
-                            
-                            <div className="form-group">
-                                <label><FaPhone /> Phone Number</label>
-                                <input
-                                    type="tel"
-                                    value={editForm.phone}
-                                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                    placeholder="Enter phone number"
-                                />
-                            </div>
-                            
-                            <div className="form-group">
-                                <label><FaMapMarkerAlt /> Address</label>
-                                <textarea
-                                    value={editForm.address}
-                                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                                    rows="2"
-                                    placeholder="Enter address"
-                                />
-                            </div>
-                            
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label><FaBuilding /> Department</label>
-                                    <input
-                                        type="text"
-                                        value={editForm.department}
-                                        onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
-                                        placeholder="Department"
-                                    />
+
+                            <div className="edit-tabs">
+                                {/* Personal Information */}
+                                <div className="edit-section">
+                                    <h4>Personal Information</h4>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label><FaPhone /> Phone Number</label>
+                                            <input
+                                                type="tel"
+                                                value={editForm.phone}
+                                                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                                placeholder="Enter phone number"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label><FaTint /> Blood Group</label>
+                                            <select
+                                                value={editForm.bloodGroup}
+                                                onChange={(e) => setEditForm({ ...editForm, bloodGroup: e.target.value })}
+                                            >
+                                                {bloodGroupOptions.map(bg => (
+                                                    <option key={bg} value={bg}>{bg || 'Select Blood Group'}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label><FaMapMarkerAlt /> Address</label>
+                                        <textarea
+                                            value={editForm.address}
+                                            onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                                            rows="2"
+                                            placeholder="Enter address"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="form-group">
-                                    <label><FaBriefcase /> Designation</label>
-                                    <input
-                                        type="text"
-                                        value={editForm.designation}
-                                        onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
-                                        placeholder="Designation"
-                                    />
+
+                                {/* Professional Information */}
+                                <div className="edit-section">
+                                    <h4>Professional Information</h4>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label><FaBuilding /> Department</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.department}
+                                                onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                                                placeholder="Department"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label><FaBriefcase /> Designation</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.designation}
+                                                onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
+                                                placeholder="Designation"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {editEmployee.role === 'EMPLOYEE' && (
+                                        <div className="form-group">
+                                            <label><FaUserTie /> Assign Manager</label>
+                                            <select
+                                                value={editForm.managerId}
+                                                onChange={(e) => setEditForm({ ...editForm, managerId: e.target.value })}
+                                            >
+                                                <option value="">No Manager</option>
+                                                {managers.map(mgr => (
+                                                    <option key={mgr.employeeId} value={mgr.employeeId}>
+                                                        {mgr.name} ({mgr.employeeId})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Documents & IDs */}
+                                <div className="edit-section">
+                                    <h4>Documents & IDs</h4>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label><FaIdCard /> PAN Card Number</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.panNumber}
+                                                onChange={(e) => setEditForm({ ...editForm, panNumber: e.target.value.toUpperCase() })}
+                                                placeholder="Enter PAN number (e.g., ABCDE1234F)"
+                                                maxLength="10"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label><FaAadhar /> Aadhar Number</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.aadharNumber}
+                                                onChange={(e) => setEditForm({ ...editForm, aadharNumber: e.target.value })}
+                                                placeholder="Enter 12-digit Aadhar number"
+                                                maxLength="12"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label><FaFileUpload /> Join Letter (PDF)</label>
+                                        <div className="file-upload-area">
+                                            <input
+                                                type="file"
+                                                accept=".pdf"
+                                                onChange={handleFileSelect}
+                                                className="file-input"
+                                            />
+                                            {editForm.joinLetter && !selectedFile && (
+                                                <div className="existing-file">
+                                                    <FaFileAlt />
+                                                    <a href={editForm.joinLetter} target="_blank" rel="noopener noreferrer">View existing join letter</a>
+                                                    <small>Upload new file to replace</small>
+                                                </div>
+                                            )}
+                                            {selectedFile && (
+                                                <div className="selected-file">
+                                                    <FaFileAlt />
+                                                    <span>{selectedFile.name}</span>
+                                                    <button onClick={() => setSelectedFile(null)}>Remove</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Bank Details */}
+                                <div className="edit-section">
+                                    <h4>Bank Details</h4>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label><FaUniversity /> Bank Name</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.bankName}
+                                                onChange={(e) => setEditForm({ ...editForm, bankName: e.target.value })}
+                                                placeholder="Bank name"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label><FaCreditCard /> Account Number</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.bankAccountNo}
+                                                onChange={(e) => setEditForm({ ...editForm, bankAccountNo: e.target.value })}
+                                                placeholder="Bank account number"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label><FaIdCard /> IFSC Code</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.bankIfsc}
+                                                onChange={(e) => setEditForm({ ...editForm, bankIfsc: e.target.value.toUpperCase() })}
+                                                placeholder="IFSC code (e.g., SBIN0001234)"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label><FaUserTie /> Account Holder Name</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.accountHolderName}
+                                                onChange={(e) => setEditForm({ ...editForm, accountHolderName: e.target.value })}
+                                                placeholder="Name as per bank account"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            {editEmployee.role === 'EMPLOYEE' && (
-                                <div className="form-group">
-                                    <label><FaUserTie /> Assign Manager</label>
-                                    <select
-                                        value={editForm.managerId}
-                                        onChange={(e) => setEditForm({ ...editForm, managerId: e.target.value })}
-                                    >
-                                        <option value="">No Manager</option>
-                                        {managers.map(mgr => (
-                                            <option key={mgr.employeeId} value={mgr.employeeId}>
-                                                {mgr.name} ({mgr.employeeId})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
                         </div>
                         <div className="modal-footer">
                             <button className="cancel-btn" onClick={() => setShowEditModal(false)}>Cancel</button>
@@ -576,7 +875,7 @@ const AllEmployees = () => {
                     </div>
                 </div>
             )}
-            
+
             {/* Confirmation Modal */}
             {confirmModal.show && (
                 <div className="modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
