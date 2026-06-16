@@ -42,6 +42,7 @@ import HRPolicySettings from "./Pages/HR/Policies/HRPolicySettings";
 import AllEmployees from "./Pages/Admin/Employees/AllEmployees";
 import ManagerTeam from "./Pages/Manager/Team/ManagerTeam";
 import AdminDashboard from "./Pages/Admin/Dashboard/AdminDashboard";
+import PageNotFound from "./Pages/404/PageNotFound";
 // HR Imports
 
 
@@ -54,6 +55,8 @@ const App = () => {
         {/* <Route path="/" element={<PerfumeScroll />} /> */}
         <Route path="/admin/login" element={<AdminAuth />} />
         <Route path="/login" element={<EmployeeLogin />} />
+        <Route path="*" element={<PageNotFound />} />
+
 
         {/* Admin Routes (with Layout) */}
         <Route path="/admin" element={<AdminLayout />}>
