@@ -125,7 +125,7 @@ const AdminSalary = () => {
         const lastDayOfTargetMonth = new Date(year, month, 0).getDate();
 
         if (currentYear === year && currentMonth === month) {
-            return currentDate >= 26 && currentDate <= lastDayOfTargetMonth;
+            return currentDate >= 15 && currentDate <= lastDayOfTargetMonth;
         }
 
         let nextMonth = month + 1;
