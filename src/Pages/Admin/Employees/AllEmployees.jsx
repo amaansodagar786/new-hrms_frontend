@@ -32,8 +32,20 @@ import {
     FaIdCard as FaAadhar,
     FaFileUpload,
     FaLock,
-    FaKey , 
-    FaInfoCircle 
+    FaKey,
+    FaInfoCircle,
+    FaClock,
+    FaCheckCircle,
+    FaTimesCircle,
+    FaHistory,
+    FaChartLine,
+    FaStar,
+    FaUser ,
+    FaFilter as FaFilterIcon,
+    FaCalendarCheck,
+    FaUserClock,
+    FaChartBar,
+    FaDownload
 } from 'react-icons/fa';
 import './AllEmployees.scss';
 
@@ -52,9 +64,16 @@ const AllEmployees = () => {
         page: 1,
     });
 
-    // View Details Modal
+    // View Details Modal (Enhanced with tabs)
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [completeDetails, setCompleteDetails] = useState(null);
+    const [loadingDetails, setLoadingDetails] = useState(false);
+    const [activeTab, setActiveTab] = useState('personal');
+
+    // Detail filters
+    const [attendanceFilters, setAttendanceFilters] = useState({ year: '', month: '' });
+    const [leaveFilters, setLeaveFilters] = useState({ year: '', status: '' });
 
     // Edit Modal
     const [showEditModal, setShowEditModal] = useState(false);
@@ -85,7 +104,6 @@ const AllEmployees = () => {
     const [resettingPassword, setResettingPassword] = useState(false);
 
     // File upload state
-    const [uploadingFile, setUploadingFile] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
 
     // Confirm Modal for Status Toggle
@@ -101,6 +119,24 @@ const AllEmployees = () => {
 
     // Blood group options
     const bloodGroupOptions = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+
+    // Years for filters
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+    const months = [
+        { value: '01', label: 'January' },
+        { value: '02', label: 'February' },
+        { value: '03', label: 'March' },
+        { value: '04', label: 'April' },
+        { value: '05', label: 'May' },
+        { value: '06', label: 'June' },
+        { value: '07', label: 'July' },
+        { value: '08', label: 'August' },
+        { value: '09', label: 'September' },
+        { value: '10', label: 'October' },
+        { value: '11', label: 'November' },
+        { value: '12', label: 'December' },
+    ];
 
     // Fetch all employees
     const fetchAllEmployees = async () => {
@@ -150,20 +186,48 @@ const AllEmployees = () => {
         setFilters({ ...filters, page: newPage });
     };
 
-    // Handle view details
+    // ========== ENHANCED VIEW DETAILS WITH COMPLETE DATA ==========
     const handleViewDetails = async (employee) => {
+        setShowDetailModal(true);
+        setSelectedEmployee(employee);
+        setLoadingDetails(true);
+        setActiveTab('personal');
+
         try {
-            const response = await axios.get(`${apiUrl}/admin/employees/${employee.employeeId}`, {
-                withCredentials: true,
-            });
+            const response = await axios.get(
+                `${apiUrl}/admin/employees/${employee.employeeId}/complete-details`,
+                { withCredentials: true }
+            );
             if (response.data.success) {
-                setSelectedEmployee(response.data.employee);
-                setShowDetailModal(true);
+                setCompleteDetails(response.data.data);
+            } else {
+                toast.error('Failed to fetch complete details');
+                // Fallback to basic employee data
+                const basicResponse = await axios.get(
+                    `${apiUrl}/admin/employees/${employee.employeeId}`,
+                    { withCredentials: true }
+                );
+                if (basicResponse.data.success) {
+                    setCompleteDetails({ employee: basicResponse.data.employee });
+                }
             }
         } catch (error) {
-            toast.error('Failed to fetch employee details');
-            setSelectedEmployee(employee);
-            setShowDetailModal(true);
+            console.error('Error fetching complete details:', error);
+            toast.error('Failed to fetch complete details');
+            // Fallback
+            try {
+                const basicResponse = await axios.get(
+                    `${apiUrl}/admin/employees/${employee.employeeId}`,
+                    { withCredentials: true }
+                );
+                if (basicResponse.data.success) {
+                    setCompleteDetails({ employee: basicResponse.data.employee });
+                }
+            } catch (err) {
+                toast.error('Failed to load employee data');
+            }
+        } finally {
+            setLoadingDetails(false);
         }
     };
 
@@ -229,6 +293,18 @@ const AllEmployees = () => {
         }
     };
 
+    // Handle file selection
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file && file.type === 'application/pdf') {
+            setSelectedFile(file);
+            toast.info(`Selected: ${file.name}`);
+        } else {
+            toast.error('Please select a PDF file');
+            e.target.value = '';
+        }
+    };
+
     // Handle file upload
     const handleFileUpload = async (file) => {
         if (!file) return null;
@@ -248,18 +324,6 @@ const AllEmployees = () => {
         } catch (error) {
             toast.error('Failed to upload file');
             return null;
-        }
-    };
-
-    // Handle file selection
-    const handleFileSelect = (e) => {
-        const file = e.target.files[0];
-        if (file && file.type === 'application/pdf') {
-            setSelectedFile(file);
-            toast.info(`Selected: ${file.name}`);
-        } else {
-            toast.error('Please select a PDF file');
-            e.target.value = '';
         }
     };
 
@@ -363,11 +427,50 @@ const AllEmployees = () => {
         return str.slice(0, start) + '****' + str.slice(-end);
     };
 
+    const getStatusText = (status) => {
+        const statusMap = {
+            'ON_TIME': 'On Time',
+            'LATE': 'Late',
+            'ABSENT': 'Absent',
+            'HALF_DAY': 'Half Day',
+            'HOLIDAY': 'Holiday',
+            'WEEKEND': 'Weekend'
+        };
+        return statusMap[status] || status || '—';
+    };
+
+    const getStatusClass = (status) => {
+        const statusMap = {
+            'ON_TIME': 'status-on-time',
+            'LATE': 'status-late',
+            'ABSENT': 'status-absent',
+            'HALF_DAY': 'status-half-day',
+            'HOLIDAY': 'status-holiday',
+            'WEEKEND': 'status-weekend'
+        };
+        return statusMap[status] || 'status-default';
+    };
+
     const roles = ['HR', 'MANAGER', 'EMPLOYEE'];
     const statusOptions = [
         { value: '', label: 'All' },
         { value: 'active', label: 'Active' },
         { value: 'inactive', label: 'Inactive' },
+    ];
+    const leaveStatusOptions = [
+        { value: '', label: 'All' },
+        { value: 'PENDING', label: 'Pending' },
+        { value: 'APPROVED', label: 'Approved' },
+        { value: 'REJECTED', label: 'Rejected' },
+        { value: 'CANCELLED', label: 'Cancelled' },
+    ];
+
+    const tabs = [
+        { key: 'personal', label: 'Personal', icon: <FaUser /> },
+        { key: 'attendance', label: 'Attendance', icon: <FaClock /> },
+        { key: 'leave', label: 'Leave', icon: <FaCalendarAlt /> },
+        { key: 'salary', label: 'Salary', icon: <FaMoneyBillWave /> },
+        { key: 'performance', label: 'Performance', icon: <FaStar /> },
     ];
 
     if (loading && employees.length === 0) {
@@ -480,13 +583,25 @@ const AllEmployees = () => {
                                             <td>{emp.managerName || '—'}</td>
                                             <td>{getStatusBadge(emp.isActive)}</td>
                                             <td className="actions-cell">
-                                                <button className="action-view" onClick={() => handleViewDetails(emp)} title="View Details">
+                                                <button
+                                                    className="action-view"
+                                                    onClick={() => handleViewDetails(emp)}
+                                                    title="View Complete Details"
+                                                >
                                                     <FaEye />
                                                 </button>
-                                                <button className="action-edit" onClick={() => handleEditClick(emp)} title="Edit">
+                                                <button
+                                                    className="action-edit"
+                                                    onClick={() => handleEditClick(emp)}
+                                                    title="Edit"
+                                                >
                                                     <FaEdit />
                                                 </button>
-                                                <button className="action-toggle" onClick={() => handleToggleStatus(emp)} title={emp.isActive ? 'Deactivate' : 'Activate'}>
+                                                <button
+                                                    className="action-toggle"
+                                                    onClick={() => handleToggleStatus(emp)}
+                                                    title={emp.isActive ? 'Deactivate' : 'Activate'}
+                                                >
                                                     {emp.isActive ? <FaUserTimes /> : <FaUserCheck />}
                                                 </button>
                                             </td>
@@ -511,526 +626,804 @@ const AllEmployees = () => {
                 )}
             </div>
 
-            {/* ========== EMPLOYEE DETAILS MODAL ========== */}
-            {
-                showDetailModal && selectedEmployee && (
-                    <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
-                        <div className="detail-modal detail-modal--large" onClick={(e) => e.stopPropagation()}>
-                            <div className="modal-header">
-                                <h3>Employee Details</h3>
-                                <button className="modal-close" onClick={() => setShowDetailModal(false)}>
-                                    <FaTimes />
-                                </button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="employee-profile-header">
-                                    <div className="profile-avatar-large">
-                                        {selectedEmployee.name?.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="profile-info">
-                                        <h2>{selectedEmployee.name}</h2>
-                                        <div className="profile-badges">
-                                            {getRoleBadge(selectedEmployee.role)}
-                                            {getStatusBadge(selectedEmployee.isActive)}
-                                        </div>
-                                    </div>
+            {/* ========== ENHANCED EMPLOYEE DETAILS MODAL ========== */}
+            {showDetailModal && selectedEmployee && (
+                <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
+                    <div className="detail-modal detail-modal--large" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Employee Complete Details</h3>
+                            <button className="modal-close" onClick={() => setShowDetailModal(false)}>
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            {loadingDetails ? (
+                                <div className="loading-state">
+                                    <div className="spinner"></div>
+                                    <p>Loading complete details...</p>
                                 </div>
-
-                                <div className="details-tabs">
-                                    <div className="details-section">
-                                        <h4>Personal Information</h4>
-                                        <div className="details-grid">
-                                            <div className="detail-item">
-                                                <FaIdCard />
-                                                <div>
-                                                    <label>Employee ID</label>
-                                                    <p>{selectedEmployee.employeeId}</p>
-                                                </div>
+                            ) : (
+                                <>
+                                    {/* Header with Avatar */}
+                                    <div className="employee-profile-header">
+                                        <div className="profile-avatar-large">
+                                            {selectedEmployee.name?.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="profile-info">
+                                            <h2>{selectedEmployee.name}</h2>
+                                            <div className="profile-badges">
+                                                {getRoleBadge(selectedEmployee.role)}
+                                                {getStatusBadge(selectedEmployee.isActive)}
                                             </div>
-                                            <div className="detail-item">
-                                                <FaEnvelope />
-                                                <div>
-                                                    <label>Email</label>
-                                                    <p>{selectedEmployee.email}</p>
-                                                </div>
-                                            </div>
-                                            <div className="detail-item">
-                                                <FaPhone />
-                                                <div>
-                                                    <label>Phone</label>
-                                                    <p>{selectedEmployee.phone || 'Not provided'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="detail-item">
-                                                <FaMapMarkerAlt />
-                                                <div>
-                                                    <label>Address</label>
-                                                    <p>{selectedEmployee.address || 'Not provided'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="detail-item">
-                                                <FaCalendarAlt />
-                                                <div>
-                                                    <label>Join Date</label>
-                                                    <p>{formatDate(selectedEmployee.joinDate)}</p>
-                                                </div>
-                                            </div>
-                                            <div className="detail-item">
-                                                <FaTint />
-                                                <div>
-                                                    <label>Blood Group</label>
-                                                    <p>{selectedEmployee.bloodGroup || 'Not provided'}</p>
-                                                </div>
+                                            <div className="profile-meta">
+                                                <span><FaIdCard /> {selectedEmployee.employeeId}</span>
+                                                <span><FaEnvelope /> {selectedEmployee.email}</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="details-section">
-                                        <h4>Professional Information</h4>
-                                        <div className="details-grid">
-                                            <div className="detail-item">
-                                                <FaBuilding />
-                                                <div>
-                                                    <label>Department</label>
-                                                    <p>{selectedEmployee.department || 'Not assigned'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="detail-item">
-                                                <FaBriefcase />
-                                                <div>
-                                                    <label>Designation</label>
-                                                    <p>{selectedEmployee.designation || 'Not assigned'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="detail-item">
-                                                <FaUserTie />
-                                                <div>
-                                                    <label>Manager</label>
-                                                    <p>{selectedEmployee.managerName || 'No manager assigned'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="detail-item">
-                                                <FaMoneyBillWave />
-                                                <div>
-                                                    <label>Salary</label>
-                                                    <p>{formatCurrency(selectedEmployee.salary)}</p>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    {/* Tabs */}
+                                    <div className="details-tabs-nav">
+                                        {tabs.map(tab => (
+                                            <button
+                                                key={tab.key}
+                                                className={`tab-btn ${activeTab === tab.key ? 'active' : ''}`}
+                                                onClick={() => setActiveTab(tab.key)}
+                                            >
+                                                {tab.icon} {tab.label}
+                                            </button>
+                                        ))}
                                     </div>
 
-                                    <div className="details-section">
-                                        <h4>Documents & IDs</h4>
-                                        <div className="details-grid">
-                                            <div className="detail-item">
-                                                <FaIdCard />
-                                                <div>
-                                                    <label>PAN Card Number</label>
-                                                    <p>{selectedEmployee.panNumber ? maskString(selectedEmployee.panNumber, 2, 2) : 'Not provided'}</p>
+                                    {/* Tab Content */}
+                                    <div className="details-tab-content">
+                                        {/* PERSONAL TAB */}
+                                        {activeTab === 'personal' && (
+                                            <div className="tab-panel">
+                                                <div className="details-grid">
+                                                    <div className="detail-item">
+                                                        <FaIdCard />
+                                                        <div>
+                                                            <label>Employee ID</label>
+                                                            <p>{completeDetails?.employee?.employeeId || '—'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaEnvelope />
+                                                        <div>
+                                                            <label>Email</label>
+                                                            <p>{completeDetails?.employee?.email || '—'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaPhone />
+                                                        <div>
+                                                            <label>Phone</label>
+                                                            <p>{completeDetails?.employee?.phone || 'Not provided'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaMapMarkerAlt />
+                                                        <div>
+                                                            <label>Address</label>
+                                                            <p>{completeDetails?.employee?.address || 'Not provided'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaCalendarAlt />
+                                                        <div>
+                                                            <label>Join Date</label>
+                                                            <p>{formatDate(completeDetails?.employee?.joinDate)}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaTint />
+                                                        <div>
+                                                            <label>Blood Group</label>
+                                                            <p>{completeDetails?.employee?.bloodGroup || 'Not provided'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaBuilding />
+                                                        <div>
+                                                            <label>Department</label>
+                                                            <p>{completeDetails?.employee?.department || 'Not assigned'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaBriefcase />
+                                                        <div>
+                                                            <label>Designation</label>
+                                                            <p>{completeDetails?.employee?.designation || 'Not assigned'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaUserTie />
+                                                        <div>
+                                                            <label>Manager</label>
+                                                            <p>{completeDetails?.employee?.managerName || 'No manager assigned'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaMoneyBillWave />
+                                                        <div>
+                                                            <label>Salary</label>
+                                                            <p>{formatCurrency(completeDetails?.employee?.salary)}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaIdCard />
+                                                        <div>
+                                                            <label>PAN Number</label>
+                                                            <p>{completeDetails?.employee?.panNumber ? maskString(completeDetails.employee.panNumber, 2, 2) : 'Not provided'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaAadhar />
+                                                        <div>
+                                                            <label>Aadhar Number</label>
+                                                            <p>{completeDetails?.employee?.aadharNumber ? maskString(completeDetails.employee.aadharNumber, 2, 2) : 'Not provided'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaUniversity />
+                                                        <div>
+                                                            <label>Bank Name</label>
+                                                            <p>{completeDetails?.employee?.bankName || 'Not provided'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaCreditCard />
+                                                        <div>
+                                                            <label>Account Number</label>
+                                                            <p>{completeDetails?.employee?.bankAccountNo ? maskString(completeDetails.employee.bankAccountNo, 2, 4) : 'Not provided'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaIdCard />
+                                                        <div>
+                                                            <label>IFSC Code</label>
+                                                            <p>{completeDetails?.employee?.bankIfsc || 'Not provided'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <FaUserTie />
+                                                        <div>
+                                                            <label>Account Holder</label>
+                                                            <p>{completeDetails?.employee?.accountHolderName || 'Not provided'}</p>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="detail-item">
-                                                <FaAadhar />
-                                                <div>
-                                                    <label>Aadhar Number</label>
-                                                    <p>{selectedEmployee.aadharNumber ? maskString(selectedEmployee.aadharNumber, 2, 2) : 'Not provided'}</p>
-                                                </div>
-                                            </div>
-                                            {selectedEmployee.joinLetter && (
-                                                <div className="detail-item">
-                                                    <FaFileAlt />
-                                                    <div>
-                                                        <label>Join Letter</label>
-                                                        <a href={selectedEmployee.joinLetter} target="_blank" rel="noopener noreferrer" className="file-link">
-                                                            View Document
+                                                {completeDetails?.employee?.joinLetter && (
+                                                    <div className="join-letter-section">
+                                                        <FaFileAlt />
+                                                        <a href={completeDetails.employee.joinLetter} target="_blank" rel="noopener noreferrer">
+                                                            View Join Letter
                                                         </a>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
-                                    <div className="details-section">
-                                        <h4>Bank Details</h4>
-                                        <div className="details-grid">
-                                            <div className="detail-item">
-                                                <FaUniversity />
-                                                <div>
-                                                    <label>Bank Name</label>
-                                                    <p>{selectedEmployee.bankName || 'Not provided'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="detail-item">
-                                                <FaCreditCard />
-                                                <div>
-                                                    <label>Account Number</label>
-                                                    <p>{selectedEmployee.bankAccountNo ? maskString(selectedEmployee.bankAccountNo, 2, 4) : 'Not provided'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="detail-item">
-                                                <FaIdCard />
-                                                <div>
-                                                    <label>IFSC Code</label>
-                                                    <p>{selectedEmployee.bankIfsc || 'Not provided'}</p>
-                                                </div>
-                                            </div>
-                                            <div className="detail-item">
-                                                <FaUserTie />
-                                                <div>
-                                                    <label>Account Holder Name</label>
-                                                    <p>{selectedEmployee.accountHolderName || 'Not provided'}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {selectedEmployee.role === 'MANAGER' && selectedEmployee.assignedEmployeesCount > 0 && (
-                                    <div className="assigned-section">
-                                        <h4>Team Members ({selectedEmployee.assignedEmployeesCount})</h4>
-                                        <div className="team-list">
-                                            {selectedEmployee.assignedEmployees?.map(member => (
-                                                <div key={member.employeeId} className="team-member">
-                                                    <div className="team-avatar">
-                                                        {member.name?.charAt(0).toUpperCase()}
+                                        {/* ATTENDANCE TAB */}
+                                        {activeTab === 'attendance' && (
+                                            <div className="tab-panel">
+                                                <div className="tab-filters">
+                                                    <div className="filter-group">
+                                                        <label>Year</label>
+                                                        <select
+                                                            value={attendanceFilters.year}
+                                                            onChange={(e) => setAttendanceFilters({ ...attendanceFilters, year: e.target.value })}
+                                                        >
+                                                            <option value="">All Years</option>
+                                                            {years.map(y => (
+                                                                <option key={y} value={y}>{y}</option>
+                                                            ))}
+                                                        </select>
                                                     </div>
-                                                    <div>
-                                                        <div className="team-name">{member.name}</div>
-                                                        <div className="team-role">{member.designation || member.role}</div>
+                                                    <div className="filter-group">
+                                                        <label>Month</label>
+                                                        <select
+                                                            value={attendanceFilters.month}
+                                                            onChange={(e) => setAttendanceFilters({ ...attendanceFilters, month: e.target.value })}
+                                                        >
+                                                            <option value="">All Months</option>
+                                                            {months.map(m => (
+                                                                <option key={m.value} value={m.value}>{m.label}</option>
+                                                            ))}
+                                                        </select>
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                                <div className="attendance-stats">
+                                                    <div className="stat-card">
+                                                        <span>Total Records</span>
+                                                        <strong>{completeDetails?.attendance?.records?.length || 0}</strong>
+                                                    </div>
+                                                    <div className="stat-card">
+                                                        <span>Present</span>
+                                                        <strong className="text-success">
+                                                            {completeDetails?.attendance?.records?.filter(r => r.checkInTime).length || 0}
+                                                        </strong>
+                                                    </div>
+                                                    <div className="stat-card">
+                                                        <span>Absent</span>
+                                                        <strong className="text-danger">
+                                                            {completeDetails?.attendance?.records?.filter(r => r.status === 'ABSENT').length || 0}
+                                                        </strong>
+                                                    </div>
+                                                    <div className="stat-card">
+                                                        <span>Late</span>
+                                                        <strong className="text-warning">
+                                                            {completeDetails?.attendance?.records?.filter(r => r.status === 'LATE').length || 0}
+                                                        </strong>
+                                                    </div>
+                                                </div>
+                                                <div className="attendance-table-wrap">
+                                                    <table className="attendance-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Date</th>
+                                                                <th>Check In</th>
+                                                                <th>Check Out</th>
+                                                                <th>Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {completeDetails?.attendance?.records?.length > 0 ? (
+                                                                completeDetails.attendance.records.map((record, idx) => (
+                                                                    <tr key={idx}>
+                                                                        <td>{record.date}</td>
+                                                                        <td>{record.checkInTime || '—'}</td>
+                                                                        <td>{record.checkOutTime || '—'}</td>
+                                                                        <td>
+                                                                            <span className={`status-badge-small ${getStatusClass(record.status)}`}>
+                                                                                {getStatusText(record.status)}
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))
+                                                            ) : (
+                                                                <tr>
+                                                                    <td colSpan="4" className="no-data">No attendance records found</td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* LEAVE TAB */}
+                                        {activeTab === 'leave' && (
+                                            <div className="tab-panel">
+                                                <div className="tab-filters">
+                                                    <div className="filter-group">
+                                                        <label>Year</label>
+                                                        <select
+                                                            value={leaveFilters.year}
+                                                            onChange={(e) => setLeaveFilters({ ...leaveFilters, year: e.target.value })}
+                                                        >
+                                                            <option value="">All Years</option>
+                                                            {years.map(y => (
+                                                                <option key={y} value={y}>{y}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div className="filter-group">
+                                                        <label>Status</label>
+                                                        <select
+                                                            value={leaveFilters.status}
+                                                            onChange={(e) => setLeaveFilters({ ...leaveFilters, status: e.target.value })}
+                                                        >
+                                                            {leaveStatusOptions.map(opt => (
+                                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                {/* Leave Balance */}
+                                                <div className="leave-balance-section">
+                                                    <h4>Leave Balance</h4>
+                                                    <div className="leave-balance-grid">
+                                                        {completeDetails?.leave?.balance ? (
+                                                            Object.entries(completeDetails.leave.balance).map(([key, val]) => (
+                                                                <div key={key} className="balance-item">
+                                                                    <span className="balance-type">{key}</span>
+                                                                    <div className="balance-details">
+                                                                        <span>Used: {val.used}</span>
+                                                                        <span>Remaining: {val.remaining}</span>
+                                                                        <span>Total: {val.total}</span>
+                                                                    </div>
+                                                                </div>
+                                                            ))
+                                                        ) : (
+                                                            <div className="no-data">No leave balance found</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Leave History */}
+                                                <div className="leave-history-section">
+                                                    <h4>Leave History</h4>
+                                                    <div className="leave-table-wrap">
+                                                        <table className="leave-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>From</th>
+                                                                    <th>To</th>
+                                                                    <th>Days</th>
+                                                                    <th>Reason</th>
+                                                                    <th>Status</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {completeDetails?.leave?.history?.length > 0 ? (
+                                                                    completeDetails.leave.history.map((leave, idx) => (
+                                                                        <tr key={idx}>
+                                                                            <td>{leave.fromDate}</td>
+                                                                            <td>{leave.toDate}</td>
+                                                                            <td>{leave.totalDays}</td>
+                                                                            <td>{leave.reason?.substring(0, 30)}...</td>
+                                                                            <td>
+                                                                                <span className={`leave-status ${leave.status.toLowerCase()}`}>
+                                                                                    {leave.status}
+                                                                                </span>
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))
+                                                                ) : (
+                                                                    <tr>
+                                                                        <td colSpan="5" className="no-data">No leave records found</td>
+                                                                    </tr>
+                                                                )}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* SALARY TAB */}
+                                        {activeTab === 'salary' && (
+                                            <div className="tab-panel">
+                                                <div className="salary-stats">
+                                                    <div className="stat-card">
+                                                        <span>Total Records</span>
+                                                        <strong>{completeDetails?.salary?.records?.length || 0}</strong>
+                                                    </div>
+                                                    <div className="stat-card">
+                                                        <span>Basic Salary</span>
+                                                        <strong>{formatCurrency(completeDetails?.employee?.salary)}</strong>
+                                                    </div>
+                                                    <div className="stat-card">
+                                                        <span>Paid</span>
+                                                        <strong className="text-success">
+                                                            {completeDetails?.salary?.records?.filter(r => r.status === 'PAID').length || 0}
+                                                        </strong>
+                                                    </div>
+                                                    <div className="stat-card">
+                                                        <span>Unpaid</span>
+                                                        <strong className="text-danger">
+                                                            {completeDetails?.salary?.records?.filter(r => r.status === 'UNPAID').length || 0}
+                                                        </strong>
+                                                    </div>
+                                                </div>
+                                                <div className="salary-table-wrap">
+                                                    <table className="salary-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Month</th>
+                                                                <th>Year</th>
+                                                                <th>Net Salary</th>
+                                                                <th>Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {completeDetails?.salary?.records?.length > 0 ? (
+                                                                completeDetails.salary.records.map((record, idx) => (
+                                                                    <tr key={idx}>
+                                                                        <td>{record.month?.split('-')[1]}</td>
+                                                                        <td>{record.year}</td>
+                                                                        <td>{formatCurrency(record.netSalary)}</td>
+                                                                        <td>
+                                                                            <span className={`salary-status ${record.status.toLowerCase()}`}>
+                                                                                {record.status}
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))
+                                                            ) : (
+                                                                <tr>
+                                                                    <td colSpan="4" className="no-data">No salary records found</td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* PERFORMANCE TAB */}
+                                        {activeTab === 'performance' && (
+                                            <div className="tab-panel">
+                                                <div className="performance-stats">
+                                                    <div className="stat-card">
+                                                        <span>Total Reviews</span>
+                                                        <strong>{completeDetails?.performance?.reviews?.length || 0}</strong>
+                                                    </div>
+                                                    <div className="stat-card">
+                                                        <span>Average Rating</span>
+                                                        <strong>
+                                                            {completeDetails?.performance?.reviews?.length > 0
+                                                                ? (completeDetails.performance.reviews.reduce((sum, r) => sum + r.overallRating, 0) / completeDetails.performance.reviews.length).toFixed(1)
+                                                                : '—'}
+                                                        </strong>
+                                                    </div>
+                                                </div>
+                                                <div className="performance-table-wrap">
+                                                    <table className="performance-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Month</th>
+                                                                <th>Quarter</th>
+                                                                <th>Rating</th>
+                                                                <th>Reviewed By</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {completeDetails?.performance?.reviews?.length > 0 ? (
+                                                                completeDetails.performance.reviews.map((review, idx) => (
+                                                                    <tr key={idx}>
+                                                                        <td>{review.reviewMonth}</td>
+                                                                        <td>{review.quarter}</td>
+                                                                        <td>
+                                                                            <div className="rating-stars">
+                                                                                {[...Array(5)].map((_, i) => (
+                                                                                    <FaStar
+                                                                                        key={i}
+                                                                                        className={i < Math.floor(review.overallRating) ? 'star-filled' : 'star-empty'}
+                                                                                    />
+                                                                                ))}
+                                                                                <span>{review.overallRating}/5</span>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td>{review.reviewedByName}</td>
+                                                                    </tr>
+                                                                ))
+                                                            ) : (
+                                                                <tr>
+                                                                    <td colSpan="4" className="no-data">No performance reviews found</td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                            <div className="modal-footer">
-                                <button className="close-btn" onClick={() => setShowDetailModal(false)}>Close</button>
-                                <button className="edit-btn" onClick={() => {
-                                    setShowDetailModal(false);
-                                    handleEditClick(selectedEmployee);
-                                }}>
-                                    <FaEdit /> Edit Employee
-                                </button>
-                            </div>
+                                </>
+                            )}
+                        </div>
+                        <div className="modal-footer">
+                            <button className="close-btn" onClick={() => setShowDetailModal(false)}>Close</button>
+                            <button className="edit-btn" onClick={() => {
+                                setShowDetailModal(false);
+                                handleEditClick(selectedEmployee);
+                            }}>
+                                <FaEdit /> Edit Employee
+                            </button>
                         </div>
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {/* ========== EDIT EMPLOYEE MODAL ========== */}
-            {
-                showEditModal && editEmployee && (
-                    <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-                        <div className="edit-modal edit-modal--large" onClick={(e) => e.stopPropagation()}>
-                            <div className="modal-header">
-                                <h3><FaEdit /> Edit Employee</h3>
-                                <button className="modal-close" onClick={() => setShowEditModal(false)}>
-                                    <FaTimes />
+            {showEditModal && editEmployee && (
+                <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+                    <div className="edit-modal edit-modal--large" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3><FaEdit /> Edit Employee</h3>
+                            <button className="modal-close" onClick={() => setShowEditModal(false)}>
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="employee-info">
+                                <div className="employee-avatar-large">
+                                    {editEmployee.name?.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h4>{editEmployee.name}</h4>
+                                    <p>{editEmployee.employeeId} • {editEmployee.role}</p>
+                                </div>
+                            </div>
+
+                            {/* Password Reset Button */}
+                            <div className="password-reset-section">
+                                <button
+                                    className="password-reset-btn"
+                                    onClick={() => handlePasswordResetClick(editEmployee)}
+                                >
+                                    <FaKey /> Reset Password
                                 </button>
                             </div>
-                            <div className="modal-body">
-                                <div className="employee-info">
-                                    <div className="employee-avatar-large">
-                                        {editEmployee.name?.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <h4>{editEmployee.name}</h4>
-                                        <p>{editEmployee.employeeId} • {editEmployee.role}</p>
-                                    </div>
-                                </div>
 
-                                {/* Password Reset Button */}
-                                <div className="password-reset-section">
-                                    <button
-                                        className="password-reset-btn"
-                                        onClick={() => handlePasswordResetClick(editEmployee)}
-                                    >
-                                        <FaKey /> Reset Password
-                                    </button>
-                                    {/* <small>Send password reset link to employee</small> */}
-                                </div>
-
-                                <div className="edit-tabs">
-                                    {/* Personal Information */}
-                                    <div className="edit-section">
-                                        <h4>Personal Information</h4>
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label><FaPhone /> Phone Number</label>
-                                                <input
-                                                    type="tel"
-                                                    value={editForm.phone}
-                                                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                                    placeholder="Enter phone number"
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label><FaTint /> Blood Group</label>
-                                                <select
-                                                    value={editForm.bloodGroup}
-                                                    onChange={(e) => setEditForm({ ...editForm, bloodGroup: e.target.value })}
-                                                >
-                                                    {bloodGroupOptions.map(bg => (
-                                                        <option key={bg} value={bg}>{bg || 'Select Blood Group'}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
+                            <div className="edit-tabs">
+                                {/* Personal Information */}
+                                <div className="edit-section">
+                                    <h4>Personal Information</h4>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label><FaPhone /> Phone Number</label>
+                                            <input
+                                                type="tel"
+                                                value={editForm.phone}
+                                                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                                                placeholder="Enter phone number"
+                                            />
                                         </div>
                                         <div className="form-group">
-                                            <label><FaMapMarkerAlt /> Address</label>
-                                            <textarea
-                                                value={editForm.address}
-                                                onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                                                rows="2"
-                                                placeholder="Enter address"
+                                            <label><FaTint /> Blood Group</label>
+                                            <select
+                                                value={editForm.bloodGroup}
+                                                onChange={(e) => setEditForm({ ...editForm, bloodGroup: e.target.value })}
+                                            >
+                                                {bloodGroupOptions.map(bg => (
+                                                    <option key={bg} value={bg}>{bg || 'Select Blood Group'}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label><FaMapMarkerAlt /> Address</label>
+                                        <textarea
+                                            value={editForm.address}
+                                            onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                                            rows="2"
+                                            placeholder="Enter address"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Professional Information */}
+                                <div className="edit-section">
+                                    <h4>Professional Information</h4>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label><FaBuilding /> Department</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.department}
+                                                onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                                                placeholder="Department"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label><FaBriefcase /> Designation</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.designation}
+                                                onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
+                                                placeholder="Designation"
                                             />
                                         </div>
                                     </div>
 
-                                    {/* Professional Information */}
-                                    <div className="edit-section">
-                                        <h4>Professional Information</h4>
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label><FaBuilding /> Department</label>
-                                                <input
-                                                    type="text"
-                                                    value={editForm.department}
-                                                    onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
-                                                    placeholder="Department"
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label><FaBriefcase /> Designation</label>
-                                                <input
-                                                    type="text"
-                                                    value={editForm.designation}
-                                                    onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })}
-                                                    placeholder="Designation"
-                                                />
-                                            </div>
+                                    {editEmployee.role === 'EMPLOYEE' && (
+                                        <div className="form-group">
+                                            <label><FaUserTie /> Assign Manager</label>
+                                            <select
+                                                value={editForm.managerId}
+                                                onChange={(e) => setEditForm({ ...editForm, managerId: e.target.value })}
+                                            >
+                                                <option value="">No Manager</option>
+                                                {managers.map(mgr => (
+                                                    <option key={mgr.employeeId} value={mgr.employeeId}>
+                                                        {mgr.name} ({mgr.employeeId})
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
+                                    )}
+                                </div>
 
-                                        {editEmployee.role === 'EMPLOYEE' && (
-                                            <div className="form-group">
-                                                <label><FaUserTie /> Assign Manager</label>
-                                                <select
-                                                    value={editForm.managerId}
-                                                    onChange={(e) => setEditForm({ ...editForm, managerId: e.target.value })}
-                                                >
-                                                    <option value="">No Manager</option>
-                                                    {managers.map(mgr => (
-                                                        <option key={mgr.employeeId} value={mgr.employeeId}>
-                                                            {mgr.name} ({mgr.employeeId})
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Documents & IDs */}
-                                    <div className="edit-section">
-                                        <h4>Documents & IDs</h4>
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label><FaIdCard /> PAN Card Number</label>
-                                                <input
-                                                    type="text"
-                                                    value={editForm.panNumber}
-                                                    onChange={(e) => setEditForm({ ...editForm, panNumber: e.target.value.toUpperCase() })}
-                                                    placeholder="Enter PAN number (e.g., ABCDE1234F)"
-                                                    maxLength="10"
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label><FaAadhar /> Aadhar Number</label>
-                                                <input
-                                                    type="text"
-                                                    value={editForm.aadharNumber}
-                                                    onChange={(e) => setEditForm({ ...editForm, aadharNumber: e.target.value })}
-                                                    placeholder="Enter 12-digit Aadhar number"
-                                                    maxLength="12"
-                                                />
-                                            </div>
+                                {/* Documents & IDs */}
+                                <div className="edit-section">
+                                    <h4>Documents & IDs</h4>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label><FaIdCard /> PAN Card Number</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.panNumber}
+                                                onChange={(e) => setEditForm({ ...editForm, panNumber: e.target.value.toUpperCase() })}
+                                                placeholder="Enter PAN number (e.g., ABCDE1234F)"
+                                                maxLength="10"
+                                            />
                                         </div>
                                         <div className="form-group">
-                                            <label><FaFileUpload /> Join Letter (PDF)</label>
-                                            <div className="file-upload-area">
-                                                <input
-                                                    type="file"
-                                                    accept=".pdf"
-                                                    onChange={handleFileSelect}
-                                                    className="file-input"
-                                                />
-                                                {editForm.joinLetter && !selectedFile && (
-                                                    <div className="existing-file">
-                                                        <FaFileAlt />
-                                                        <a href={editForm.joinLetter} target="_blank" rel="noopener noreferrer">View existing join letter</a>
-                                                        <small>Upload new file to replace</small>
-                                                    </div>
-                                                )}
-                                                {selectedFile && (
-                                                    <div className="selected-file">
-                                                        <FaFileAlt />
-                                                        <span>{selectedFile.name}</span>
-                                                        <button onClick={() => setSelectedFile(null)}>Remove</button>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <label><FaAadhar /> Aadhar Number</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.aadharNumber}
+                                                onChange={(e) => setEditForm({ ...editForm, aadharNumber: e.target.value })}
+                                                placeholder="Enter 12-digit Aadhar number"
+                                                maxLength="12"
+                                            />
                                         </div>
                                     </div>
-
-                                    {/* Bank Details */}
-                                    <div className="edit-section">
-                                        <h4>Bank Details</h4>
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label><FaUniversity /> Bank Name</label>
-                                                <input
-                                                    type="text"
-                                                    value={editForm.bankName}
-                                                    onChange={(e) => setEditForm({ ...editForm, bankName: e.target.value })}
-                                                    placeholder="Bank name"
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label><FaCreditCard /> Account Number</label>
-                                                <input
-                                                    type="text"
-                                                    value={editForm.bankAccountNo}
-                                                    onChange={(e) => setEditForm({ ...editForm, bankAccountNo: e.target.value })}
-                                                    placeholder="Bank account number"
-                                                />
-                                            </div>
+                                    <div className="form-group">
+                                        <label><FaFileUpload /> Join Letter (PDF)</label>
+                                        <div className="file-upload-area">
+                                            <input
+                                                type="file"
+                                                accept=".pdf"
+                                                onChange={handleFileSelect}
+                                                className="file-input"
+                                            />
+                                            {editForm.joinLetter && !selectedFile && (
+                                                <div className="existing-file">
+                                                    <FaFileAlt />
+                                                    <a href={editForm.joinLetter} target="_blank" rel="noopener noreferrer">View existing join letter</a>
+                                                    <small>Upload new file to replace</small>
+                                                </div>
+                                            )}
+                                            {selectedFile && (
+                                                <div className="selected-file">
+                                                    <FaFileAlt />
+                                                    <span>{selectedFile.name}</span>
+                                                    <button onClick={() => setSelectedFile(null)}>Remove</button>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label><FaIdCard /> IFSC Code</label>
-                                                <input
-                                                    type="text"
-                                                    value={editForm.bankIfsc}
-                                                    onChange={(e) => setEditForm({ ...editForm, bankIfsc: e.target.value.toUpperCase() })}
-                                                    placeholder="IFSC code (e.g., SBIN0001234)"
-                                                />
-                                            </div>
-                                            <div className="form-group">
-                                                <label><FaUserTie /> Account Holder Name</label>
-                                                <input
-                                                    type="text"
-                                                    value={editForm.accountHolderName}
-                                                    onChange={(e) => setEditForm({ ...editForm, accountHolderName: e.target.value })}
-                                                    placeholder="Name as per bank account"
-                                                />
-                                            </div>
+                                    </div>
+                                </div>
+
+                                {/* Bank Details */}
+                                <div className="edit-section">
+                                    <h4>Bank Details</h4>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label><FaUniversity /> Bank Name</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.bankName}
+                                                onChange={(e) => setEditForm({ ...editForm, bankName: e.target.value })}
+                                                placeholder="Bank name"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label><FaCreditCard /> Account Number</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.bankAccountNo}
+                                                onChange={(e) => setEditForm({ ...editForm, bankAccountNo: e.target.value })}
+                                                placeholder="Bank account number"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label><FaIdCard /> IFSC Code</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.bankIfsc}
+                                                onChange={(e) => setEditForm({ ...editForm, bankIfsc: e.target.value.toUpperCase() })}
+                                                placeholder="IFSC code (e.g., SBIN0001234)"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label><FaUserTie /> Account Holder Name</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.accountHolderName}
+                                                onChange={(e) => setEditForm({ ...editForm, accountHolderName: e.target.value })}
+                                                placeholder="Name as per bank account"
+                                            />
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="modal-footer">
-                                <button className="cancel-btn" onClick={() => setShowEditModal(false)}>Cancel</button>
-                                <button className="save-btn" onClick={handleUpdateEmployee} disabled={updating}>
-                                    {updating ? <FaSpinner className="spinning" /> : <FaSave />}
-                                    {updating ? 'Saving...' : 'Save Changes'}
-                                </button>
-                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="cancel-btn" onClick={() => setShowEditModal(false)}>Cancel</button>
+                            <button className="save-btn" onClick={handleUpdateEmployee} disabled={updating}>
+                                {updating ? <FaSpinner className="spinning" /> : <FaSave />}
+                                {updating ? 'Saving...' : 'Save Changes'}
+                            </button>
                         </div>
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {/* ========== PASSWORD RESET MODAL ========== */}
-            {
-                showPasswordModal && passwordResetEmployee && (
-                    <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
-                        <div className="password-modal" onClick={(e) => e.stopPropagation()}>
-                            <div className="modal-header">
-                                <h3><FaLock /> Reset Password</h3>
-                                <button className="modal-close" onClick={() => setShowPasswordModal(false)}>
-                                    <FaTimes />
-                                </button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="password-reset-info">
-                                    <div className="reset-employee">
-                                        <div className="reset-avatar">
-                                            {passwordResetEmployee.name?.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <h4>{passwordResetEmployee.name}</h4>
-                                            <p>{passwordResetEmployee.employeeId} • {passwordResetEmployee.role}</p>
-                                        </div>
+            {showPasswordModal && passwordResetEmployee && (
+                <div className="modal-overlay" onClick={() => setShowPasswordModal(false)}>
+                    <div className="password-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3><FaLock /> Reset Password</h3>
+                            <button className="modal-close" onClick={() => setShowPasswordModal(false)}>
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="password-reset-info">
+                                <div className="reset-employee">
+                                    <div className="reset-avatar">
+                                        {passwordResetEmployee.name?.charAt(0).toUpperCase()}
                                     </div>
-                                    <div className="reset-note">
-                                        <FaInfoCircle />
-                                        <p>The employee will receive an email notification that their password has been updated. <strong>The new password will NOT be shared in the email.</strong></p>
+                                    <div>
+                                        <h4>{passwordResetEmployee.name}</h4>
+                                        <p>{passwordResetEmployee.employeeId} • {passwordResetEmployee.role}</p>
                                     </div>
                                 </div>
-
-                                <div className="form-group">
-                                    <label><FaKey /> New Password</label>
-                                    <input
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        placeholder="Enter new password (min 6 characters)"
-                                        autoFocus
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label><FaKey /> Confirm Password</label>
-                                    <input
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="Confirm new password"
-                                    />
+                                <div className="reset-note">
+                                    <FaInfoCircle />
+                                    <p>The employee will receive an email notification that their password has been updated. <strong>The new password will NOT be shared in the email.</strong></p>
                                 </div>
                             </div>
-                            <div className="modal-footer">
-                                <button className="cancel-btn" onClick={() => setShowPasswordModal(false)}>Cancel</button>
-                                <button className="save-btn" onClick={handlePasswordReset} disabled={resettingPassword}>
-                                    {resettingPassword ? <FaSpinner className="spinning" /> : <FaSave />}
-                                    {resettingPassword ? 'Resetting...' : 'Reset Password'}
-                                </button>
+
+                            <div className="form-group">
+                                <label><FaKey /> New Password</label>
+                                <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="Enter new password (min 6 characters)"
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label><FaKey /> Confirm Password</label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="Confirm new password"
+                                />
                             </div>
                         </div>
+                        <div className="modal-footer">
+                            <button className="cancel-btn" onClick={() => setShowPasswordModal(false)}>Cancel</button>
+                            <button className="save-btn" onClick={handlePasswordReset} disabled={resettingPassword}>
+                                {resettingPassword ? <FaSpinner className="spinning" /> : <FaSave />}
+                                {resettingPassword ? 'Resetting...' : 'Reset Password'}
+                            </button>
+                        </div>
                     </div>
-                )
-            }
+                </div>
+            )}
 
             {/* Confirmation Modal */}
-            {
-                confirmModal.show && (
-                    <div className="modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
-                        <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
-                            <div className="confirm-modal__header">
-                                <div className="confirm-modal__icon">
-                                    <FaExclamationTriangle />
-                                </div>
-                                <button className="confirm-modal__close" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
-                                    <FaTimes />
-                                </button>
+            {confirmModal.show && (
+                <div className="modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
+                    <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="confirm-modal__header">
+                            <div className="confirm-modal__icon">
+                                <FaExclamationTriangle />
                             </div>
-                            <div className="confirm-modal__body">
-                                <h3>{confirmModal.title}</h3>
-                                <p>{confirmModal.message}</p>
-                            </div>
-                            <div className="confirm-modal__footer">
-                                <button className="confirm-modal__cancel" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
-                                    Cancel
-                                </button>
-                                <button className="confirm-modal__confirm" onClick={confirmModal.onConfirm}>
-                                    Confirm
-                                </button>
-                            </div>
+                            <button className="confirm-modal__close" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <div className="confirm-modal__body">
+                            <h3>{confirmModal.title}</h3>
+                            <p>{confirmModal.message}</p>
+                        </div>
+                        <div className="confirm-modal__footer">
+                            <button className="confirm-modal__cancel" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
+                                Cancel
+                            </button>
+                            <button className="confirm-modal__confirm" onClick={confirmModal.onConfirm}>
+                                Confirm
+                            </button>
                         </div>
                     </div>
-                )
-            }
-        </div >
+                </div>
+            )}
+        </div>
     );
 };
 
