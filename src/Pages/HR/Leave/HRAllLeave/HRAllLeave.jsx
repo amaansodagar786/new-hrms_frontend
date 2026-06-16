@@ -13,7 +13,8 @@ import {
   FaEye,
   FaHistory,
   FaUserTie,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaCalendarAlt
 } from 'react-icons/fa';
 import './HRAllLeave.scss';
 
@@ -34,8 +35,16 @@ const HRAllLeave = () => {
   const [rejectLeaveId, setRejectLeaveId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [rejectLoading, setRejectLoading] = useState(false);
-  const [rejectType, setRejectType] = useState('reject'); // 'reject' or 'override-reject' or 'override-approve'
+  const [rejectType, setRejectType] = useState('reject');
   const [overrideStatus, setOverrideStatus] = useState('');
+
+  // Month/Year Filter States
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  // Years array for dropdown
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -48,7 +57,12 @@ const HRAllLeave = () => {
 
   const fetchAllHistory = async (page = 1) => {
     try {
-      const response = await axios.get(`${apiUrl}/leave/all-requests?page=${page}&limit=15`, { withCredentials: true });
+      let url = `${apiUrl}/leave/all-requests?page=${page}&limit=15`;
+      if (selectedStatus) url += `&status=${selectedStatus}`;
+      if (selectedMonth && selectedYear) {
+        url += `&month=${selectedMonth}&year=${selectedYear}`;
+      }
+      const response = await axios.get(url, { withCredentials: true });
       if (response.data.success) {
         setAllHistory(response.data.leaves);
         setHistoryTotal(response.data.pagination.total);
@@ -63,7 +77,7 @@ const HRAllLeave = () => {
       setLoading(false);
     };
     loadData();
-  }, []);
+  }, [selectedMonth, selectedYear, selectedStatus, selectedRole, historyPage]); // ← Add dependencies
 
   const handleApprove = async (leaveId) => {
     setProcessingId(leaveId);
@@ -78,7 +92,6 @@ const HRAllLeave = () => {
     finally { setProcessingId(null); }
   };
 
-  // Open reject modal for normal reject
   const openRejectModal = (leaveId) => {
     setRejectLeaveId(leaveId);
     setRejectionReason('');
@@ -86,7 +99,6 @@ const HRAllLeave = () => {
     setShowRejectModal(true);
   };
 
-  // Open override modal for override actions
   const openOverrideModal = (leaveId, newStatus) => {
     setRejectLeaveId(leaveId);
     setRejectionReason('');
@@ -115,12 +127,10 @@ const HRAllLeave = () => {
       let response;
 
       if (rejectType === 'reject') {
-        // Normal reject
         response = await axios.put(`${apiUrl}/leave/${rejectLeaveId}/reject`, {
           rejectionReason: rejectionReason
         }, { withCredentials: true });
       } else {
-        // Override action
         const endpoint = overrideStatus === 'APPROVED' ? 'approve' : 'reject';
         const body = overrideStatus === 'REJECTED' ? { rejectionReason: rejectionReason } : {};
         response = await axios.put(`${apiUrl}/leave/${rejectLeaveId}/${endpoint}`, body, { withCredentials: true });
@@ -239,11 +249,69 @@ const HRAllLeave = () => {
         <div className="history-card">
           <h2>Complete Leave History</h2>
           <div className="filters">
-            <div className="search-box"><FaSearch /><input type="text" placeholder="Search by name or ID..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-            <div className="filter-group"><FaFilter /><select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}><option value="">All Status</option><option value="PENDING">Pending</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option><option value="CANCELLED">Cancelled</option></select></div>
-            <div className="filter-group"><FaUserTie /><select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)}><option value="">All Roles</option><option value="HR">HR</option><option value="MANAGER">Manager</option><option value="EMPLOYEE">Employee</option></select></div>
+            <div className="search-box">
+              <FaSearch />
+              <input type="text" placeholder="Search by name or ID..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
+            <div className="filter-group">
+              <FaFilter />
+              <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+                <option value="">All Status</option>
+                <option value="PENDING">Pending</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <FaUserTie />
+              <select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)}>
+                <option value="">All Roles</option>
+                <option value="HR">HR</option>
+                <option value="MANAGER">Manager</option>
+                <option value="EMPLOYEE">Employee</option>
+              </select>
+            </div>
+
+            {/* ========== MONTH FILTER ========== */}
+            <div className="filter-group">
+              <FaCalendarAlt />
+              <select value={selectedMonth} onChange={(e) => {
+                setSelectedMonth(parseInt(e.target.value));
+                setHistoryPage(1);
+              }}>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+
+            {/* ========== YEAR FILTER ========== */}
+            <div className="filter-group">
+              <FaCalendarAlt />
+              <select value={selectedYear} onChange={(e) => {
+                setSelectedYear(parseInt(e.target.value));
+                setHistoryPage(1);
+              }}>
+                {years.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          {filteredHistory.length === 0 ? (<div className="empty-state"><FaHistory /><p>No leave history found</p></div>) : (
+
+          {filteredHistory.length === 0 ? (
+            <div className="empty-state"><FaHistory /><p>No leave history found</p></div>
+          ) : (
             <>
               <div className="table-responsive">
                 <table className="history-table">

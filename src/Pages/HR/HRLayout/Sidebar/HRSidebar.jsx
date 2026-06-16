@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
     FaTachometerAlt, FaUsers, FaCalendarAlt, FaMoneyBillWave,
     FaCog, FaBell, FaSignOutAlt, FaTimes, FaBars,
-    FaChevronRight, FaUser, FaChevronDown, FaLeaf ,  
+    FaChevronRight, FaUser, FaChevronDown, FaLeaf,
 } from 'react-icons/fa';
 import './HRSidebar.scss';
 
@@ -36,7 +36,7 @@ const HRSidebar = ({ sidebarOpen, toggleSidebar, handleLogout, userName, userRol
                 { path: '/hr/leave/all', name: 'Leave Management', icon: <FaUsers /> },
             ]
         },
-        { path: '/hr/payroll', name: 'Payroll', icon: <FaMoneyBillWave /> },
+        // { path: '/hr/payroll', name: 'Payroll', icon: <FaMoneyBillWave /> },
         { path: '/hr/policies', name: 'Policies', icon: <FaCog /> },
         { path: '/hr/announcements', name: 'Announcements', icon: <FaBell /> },
         {
@@ -49,11 +49,7 @@ const HRSidebar = ({ sidebarOpen, toggleSidebar, handleLogout, userName, userRol
             name: 'Salary',
             icon: <FaUsers />,
         },
-        {
-    path: '/hr/policies',
-    name: 'Policies',
-    icon: <FaCog />,
-},
+        
     ];
 
     // Check if any child of leave is active

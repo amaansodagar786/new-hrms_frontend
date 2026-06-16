@@ -59,7 +59,7 @@ const AdminSidebar = ({ sidebarOpen, toggleSidebar, handleLogout }) => {
                 { path: '/admin/leave', name: 'All Leave Requests', icon: <FaListUl /> },
             ],
         },
-        { path: '/admin/payroll', name: 'Payroll', icon: <FaMoneyBillWave /> },
+        // { path: '/admin/payroll', name: 'Payroll', icon: <FaMoneyBillWave /> },
         { path: '/admin/policies', name: 'Policies', icon: <FaCog /> },
         {
             path: '/admin/overview',

@@ -25,8 +25,7 @@ const AdminAttendance = () => {
     const [filteredAttendance, setFilteredAttendance] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedDate, setSelectedDate] = useState('');
-    const [selectedRole, setSelectedRole] = useState('');
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); const [selectedRole, setSelectedRole] = useState('');
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
     const [editForm, setEditForm] = useState({

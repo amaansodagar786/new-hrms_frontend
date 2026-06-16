@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { 
-  FaCheckCircle, 
-  FaTimesCircle, 
-  FaClock, 
+import {
+  FaCheckCircle,
+  FaTimesCircle,
+  FaClock,
   FaCalendarAlt,
   FaHistory,
   FaSpinner,
@@ -36,7 +36,7 @@ const HRAttendance = () => {
   const [policy, setPolicy] = useState(null);
   const [activeTab, setActiveTab] = useState('my');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedRole, setSelectedRole] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
@@ -138,22 +138,22 @@ const HRAttendance = () => {
   // Apply filters
   useEffect(() => {
     let filtered = [...allAttendance];
-    
+
     if (searchTerm) {
-      filtered = filtered.filter(record => 
+      filtered = filtered.filter(record =>
         record.employeeName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         record.employeeId?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     if (selectedDate) {
       filtered = filtered.filter(record => record.date === selectedDate);
     }
-    
+
     if (selectedRole) {
       filtered = filtered.filter(record => record.role === selectedRole);
     }
-    
+
     setFilteredAttendance(filtered);
   }, [searchTerm, selectedDate, selectedRole, allAttendance]);
 
@@ -215,7 +215,7 @@ const HRAttendance = () => {
   // Handle update attendance
   const handleUpdateAttendance = async () => {
     if (!editingRecord) return;
-    
+
     setUpdating(true);
     try {
       const response = await axios.put(
@@ -227,7 +227,7 @@ const HRAttendance = () => {
         },
         { withCredentials: true }
       );
-      
+
       if (response.data.success) {
         toast.success('Attendance updated successfully');
         setShowEditModal(false);
@@ -377,13 +377,13 @@ const HRAttendance = () => {
 
       {/* Tab Navigation */}
       <div className="attendance-tabs">
-        <button 
+        <button
           className={`tab-btn ${activeTab === 'my' ? 'active' : ''}`}
           onClick={() => setActiveTab('my')}
         >
           <FaClock /> My Attendance
         </button>
-        <button 
+        <button
           className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
           onClick={() => setActiveTab('all')}
         >
@@ -397,7 +397,7 @@ const HRAttendance = () => {
           {/* Today's Attendance Card */}
           <div className="today-card">
             <h2>Today's Status</h2>
-            
+
             <div className="today-status">
               {todayAttendance ? (
                 <div className="status-section">
@@ -620,8 +620,8 @@ const HRAttendance = () => {
                         </span>
                       </td>
                       <td>
-                        <button 
-                          className="edit-btn" 
+                        <button
+                          className="edit-btn"
                           onClick={() => handleEditClick(record)}
                           title="Edit Attendance"
                         >
@@ -671,32 +671,32 @@ const HRAttendance = () => {
                   <strong>{new Date(editingRecord.date).toLocaleDateString()}</strong>
                 </div>
               </div>
-              
+
               <div className="form-group">
                 <label>Check In Time</label>
                 <input
                   type="time"
                   value={editForm.checkInTime}
-                  onChange={(e) => setEditForm({...editForm, checkInTime: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, checkInTime: e.target.value })}
                   placeholder="HH:MM"
                 />
               </div>
-              
+
               <div className="form-group">
                 <label>Check Out Time</label>
                 <input
                   type="time"
                   value={editForm.checkOutTime}
-                  onChange={(e) => setEditForm({...editForm, checkOutTime: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, checkOutTime: e.target.value })}
                   placeholder="HH:MM"
                 />
               </div>
-              
+
               <div className="form-group">
                 <label>Notes / Reason for correction</label>
                 <textarea
                   value={editForm.notes}
-                  onChange={(e) => setEditForm({...editForm, notes: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                   rows="3"
                   placeholder="Enter reason for attendance correction..."
                 />

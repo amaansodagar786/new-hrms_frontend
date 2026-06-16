@@ -14,7 +14,8 @@ import {
   FaHistory,
   FaUserShield,
   FaDownload,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaCalendarAlt
 } from 'react-icons/fa';
 import './AdminLeave.scss';
 
@@ -30,6 +31,14 @@ const AdminLeave = () => {
   const [historyPage, setHistoryPage] = useState(1);
   const [historyTotal, setHistoryTotal] = useState(0);
   const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
+
+  // ========== MONTH/YEAR FILTER STATES ==========
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  
+  // Years array for dropdown
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
   // Modal States
   const [showModal, setShowModal] = useState(false);
@@ -51,10 +60,15 @@ const AdminLeave = () => {
     } catch (error) { console.error('Error:', error); }
   };
 
-  // Fetch all history
+  // Fetch all history with filters
   const fetchAllHistory = async (page = 1) => {
     try {
-      const response = await axios.get(`${apiUrl}/leave/all-requests?page=${page}&limit=15`, { withCredentials: true });
+      let url = `${apiUrl}/leave/all-requests?page=${page}&limit=15`;
+      if (selectedStatus) url += `&status=${selectedStatus}`;
+      if (selectedMonth && selectedYear) {
+        url += `&month=${selectedMonth}&year=${selectedYear}`;
+      }
+      const response = await axios.get(url, { withCredentials: true });
       if (response.data.success) {
         setAllHistory(response.data.leaves);
         setHistoryTotal(response.data.pagination.total);
@@ -69,6 +83,13 @@ const AdminLeave = () => {
       }
     } catch (error) { console.error('Error:', error); }
   };
+
+  // Reload when filters change
+  useEffect(() => {
+    if (activeTab === 'history') {
+      fetchAllHistory(1);
+    }
+  }, [selectedMonth, selectedYear, selectedStatus, selectedRole]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -152,7 +173,10 @@ const AdminLeave = () => {
     }
   };
 
-  const handlePageChange = (newPage) => { setHistoryPage(newPage); fetchAllHistory(newPage); };
+  const handlePageChange = (newPage) => { 
+    setHistoryPage(newPage); 
+    fetchAllHistory(newPage); 
+  };
 
   const getStatusBadge = (status) => {
     const map = { PENDING: 'status-pending', APPROVED: 'status-approved', REJECTED: 'status-rejected', CANCELLED: 'status-cancelled' };
@@ -246,14 +270,31 @@ const AdminLeave = () => {
                 <tbody>
                   {pendingLeaves.map((leave) => (
                     <tr key={leave._id}>
-                      <td><div className="employee-cell"><div className="employee-avatar">{leave.employeeName?.charAt(0).toUpperCase()}</div><div><span>{leave.employeeName}</span><small>{leave.employeeId}</small></div></div></td>
+                      <td>
+                        <div className="employee-cell">
+                          <div className="employee-avatar">{leave.employeeName?.charAt(0).toUpperCase()}</div>
+                          <div><span>{leave.employeeName}</span><small>{leave.employeeId}</small></div>
+                        </div>
+                      </td>
                       <td><span className={`role-badge ${getRoleBadge(leave.role)}`}>{leave.role}</span></td>
-                      <td>{new Date(leave.fromDate).toLocaleDateString()} - {new Date(leave.toDate).toLocaleDateString()}<small>{leave.totalDays} day(s)</small></td>
+                      <td>
+                        {new Date(leave.fromDate).toLocaleDateString()} - {new Date(leave.toDate).toLocaleDateString()}
+                        <small>{leave.totalDays} day(s)</small>
+                      </td>
                       <td>{leave.totalDays}</td>
                       <td>{formatLeaveSummary(leave.leaveTypeSummary)}</td>
                       <td className="reason-cell">{leave.reason}</td>
                       <td>{new Date(leave.appliedOn).toLocaleDateString()}</td>
-                      <td><div className="action-buttons"><button className="approve-btn" onClick={() => handleApprove(leave._id)} disabled={processingId === leave._id}>{processingId === leave._id ? <FaSpinner className="spinning" /> : <FaCheckCircle />} Approve</button><button className="reject-btn" onClick={() => openRejectModal(leave._id)} disabled={processingId === leave._id}>{processingId === leave._id ? <FaSpinner className="spinning" /> : <FaTimesCircle />} Reject</button></div></td>
+                      <td>
+                        <div className="action-buttons">
+                          <button className="approve-btn" onClick={() => handleApprove(leave._id)} disabled={processingId === leave._id}>
+                            {processingId === leave._id ? <FaSpinner className="spinning" /> : <FaCheckCircle />} Approve
+                          </button>
+                          <button className="reject-btn" onClick={() => openRejectModal(leave._id)} disabled={processingId === leave._id}>
+                            {processingId === leave._id ? <FaSpinner className="spinning" /> : <FaTimesCircle />} Reject
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -267,11 +308,69 @@ const AdminLeave = () => {
       {activeTab === 'history' && (
         <div className="admin-history-card">
           <h2>Complete Leave History</h2>
+          
+          {/* Filters */}
           <div className="filters">
-            <div className="search-box"><FaSearch /><input type="text" placeholder="Search by name or ID..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-            <div className="filter-group"><FaFilter /><select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}><option value="">All Status</option><option value="PENDING">Pending</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option><option value="CANCELLED">Cancelled</option></select></div>
-            <div className="filter-group"><FaUserShield /><select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)}><option value="">All Roles</option><option value="HR">HR</option><option value="MANAGER">Manager</option><option value="EMPLOYEE">Employee</option></select></div>
+            <div className="search-box">
+              <FaSearch />
+              <input type="text" placeholder="Search by name or ID..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
+            <div className="filter-group">
+              <FaFilter />
+              <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+                <option value="">All Status</option>
+                <option value="PENDING">Pending</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <FaUserShield />
+              <select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)}>
+                <option value="">All Roles</option>
+                <option value="HR">HR</option>
+                <option value="MANAGER">Manager</option>
+                <option value="EMPLOYEE">Employee</option>
+              </select>
+            </div>
+
+            {/* ========== MONTH FILTER ========== */}
+            <div className="filter-group">
+              <FaCalendarAlt />
+              <select value={selectedMonth} onChange={(e) => {
+                setSelectedMonth(parseInt(e.target.value));
+                setHistoryPage(1);
+              }}>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </div>
+
+            {/* ========== YEAR FILTER ========== */}
+            <div className="filter-group">
+              <FaCalendarAlt />
+              <select value={selectedYear} onChange={(e) => {
+                setSelectedYear(parseInt(e.target.value));
+                setHistoryPage(1);
+              }}>
+                {years.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
           </div>
+
           {filteredHistory.length === 0 ? (
             <div className="empty-state"><FaHistory /><p>No leave history found</p></div>
           ) : (
@@ -284,21 +383,50 @@ const AdminLeave = () => {
                   <tbody>
                     {filteredHistory.map((leave) => (
                       <tr key={leave._id}>
-                        <td><div className="employee-cell"><div className="employee-avatar">{leave.employeeName?.charAt(0).toUpperCase()}</div><div><span>{leave.employeeName}</span><small>{leave.employeeId}</small></div></div></td>
+                        <td>
+                          <div className="employee-cell">
+                            <div className="employee-avatar">{leave.employeeName?.charAt(0).toUpperCase()}</div>
+                            <div><span>{leave.employeeName}</span><small>{leave.employeeId}</small></div>
+                          </div>
+                        </td>
                         <td><span className={`role-badge ${getRoleBadge(leave.role)}`}>{leave.role}</span></td>
-                        <td>{new Date(leave.fromDate).toLocaleDateString()} - {new Date(leave.toDate).toLocaleDateString()}<small>{leave.totalDays} day(s)</small></td>
+                        <td>
+                          {new Date(leave.fromDate).toLocaleDateString()} - {new Date(leave.toDate).toLocaleDateString()}
+                          <small>{leave.totalDays} day(s)</small>
+                        </td>
                         <td>{leave.totalDays}</td>
                         <td>{formatLeaveSummary(leave.leaveTypeSummary)}</td>
                         <td className="reason-cell">{leave.reason}</td>
                         <td><span className={`status-badge ${getStatusBadge(leave.status)}`}>{getStatusText(leave.status)}</span></td>
                         <td>{leave.approvedByName || '—'}</td>
-                        <td>{leave.status !== 'CANCELLED' && (<div className="override-buttons"><button className="override-approve" onClick={() => openOverrideModal(leave._id, 'APPROVED')} disabled={processingId === leave._id}>Override Approve</button><button className="override-reject" onClick={() => openOverrideModal(leave._id, 'REJECTED')} disabled={processingId === leave._id}>Override Reject</button></div>)}</td>
+                        <td>
+                          {leave.status !== 'CANCELLED' && leave.status !== 'PENDING' && (
+                            <div className="override-buttons">
+                              <button className="override-approve" onClick={() => openOverrideModal(leave._id, 'APPROVED')} disabled={processingId === leave._id}>
+                                Override Approve
+                              </button>
+                              <button className="override-reject" onClick={() => openOverrideModal(leave._id, 'REJECTED')} disabled={processingId === leave._id}>
+                                Override Reject
+                              </button>
+                            </div>
+                          )}
+                          {leave.status === 'PENDING' && (
+                            <div className="action-buttons-small">
+                              <button className="approve-small" onClick={() => handleApprove(leave._id)} disabled={processingId === leave._id}>Approve</button>
+                              <button className="reject-small" onClick={() => openRejectModal(leave._id)} disabled={processingId === leave._id}>Reject</button>
+                            </div>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <div className="pagination"><button onClick={() => handlePageChange(historyPage - 1)} disabled={historyPage === 1}>Previous</button><span>Page {historyPage} of {Math.ceil(historyTotal / 15)}</span><button onClick={() => handlePageChange(historyPage + 1)} disabled={historyPage === Math.ceil(historyTotal / 15)}>Next</button></div>
+              <div className="pagination">
+                <button onClick={() => handlePageChange(historyPage - 1)} disabled={historyPage === 1}>Previous</button>
+                <span>Page {historyPage} of {Math.ceil(historyTotal / 15)}</span>
+                <button onClick={() => handlePageChange(historyPage + 1)} disabled={historyPage === Math.ceil(historyTotal / 15)}>Next</button>
+              </div>
             </>
           )}
         </div>
