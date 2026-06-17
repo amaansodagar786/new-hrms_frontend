@@ -43,6 +43,7 @@ import AllEmployees from "./Pages/Admin/Employees/AllEmployees";
 import ManagerTeam from "./Pages/Manager/Team/ManagerTeam";
 import AdminDashboard from "./Pages/Admin/Dashboard/AdminDashboard";
 import PageNotFound from "./Pages/404/PageNotFound";
+import AdminReports from "./Pages/Admin/Reports/AdminReports";
 // HR Imports
 
 
@@ -70,6 +71,7 @@ const App = () => {
           <Route path="announcements" element={<Announcements userRole="ADMIN" />} />
           <Route path="salary" element={<AdminSalary />} />
           <Route path="employees" element={<AllEmployees />} />
+          <Route path="reports" element={<AdminReports />} />
 
 
         </Route>

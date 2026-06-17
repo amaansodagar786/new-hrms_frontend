@@ -62,6 +62,7 @@ const AdminSidebar = ({ sidebarOpen, toggleSidebar, handleLogout }) => {
         },
         { path: '/admin/announcements', name: 'Announcements', icon: <FaBullhorn /> },
         { path: '/admin/salary', name: 'Salary Manage', icon: <FaMoneyBillWave /> },
+        { path: '/admin/reports', name: 'Reports', icon: <FaMoneyBillWave /> },
     ];
 
     const isUsersActive = location.pathname.startsWith('/admin/users');

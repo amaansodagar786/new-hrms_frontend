@@ -351,7 +351,8 @@
         font-size: 0.85rem;
         font-weight: 600;
         color: var(--hrms-text-secondary);
-        margin-bottom: 16px;
+        
+        margin: 16px;
         display: flex;
         align-items: center;
         gap: 8px;
@@ -498,7 +499,8 @@
 
 // ─── Card Footer with Edit Button (NEW) ───────────────────────────────
 .ep-card__footer {
-    margin-top: 24px;
+    
+    margin: 24px;
     padding-top: 20px;
     border-top: 1px solid var(--hrms-border);
     text-align: right;
@@ -791,5 +793,326 @@
 @media (max-width: 400px) {
     .ep-container {
         padding: 14px 12px;
+    }
+}
+
+// ========== HEADER ACTIONS ==========
+.ep-page-header {
+    .ep-header-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+}
+
+.ep-password-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 11px;
+    border: 1.5px solid var(--hrms-border);
+    background: #fff;
+    color: var(--hrms-text-secondary);
+    font-family: var(--hrms-font-head);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+
+    svg {
+        font-size: 0.8rem;
+    }
+
+    &:hover {
+        background: #F8F9FF;
+        border-color: var(--hrms-primary);
+        color: var(--hrms-primary);
+    }
+}
+
+// ========== PASSWORD MODAL ==========
+.ep-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(13, 15, 26, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.ep-password-modal {
+    background: var(--hrms-card);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 450px;
+    max-height: 90vh;
+    overflow: auto;
+    animation: ep-modal-in 0.3s ease;
+
+    .ep-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--hrms-border);
+
+        h3 {
+            font-family: var(--hrms-font-head);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--hrms-text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ep-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--hrms-text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+
+            &:hover {
+                color: var(--hrms-danger);
+            }
+        }
+    }
+
+    .ep-modal-body {
+        padding: 24px;
+    }
+
+    .ep-modal-footer {
+        display: flex;
+        gap: 12px;
+        padding: 16px 24px 24px;
+        border-top: 1px solid var(--hrms-border);
+
+        .ep-modal-cancel {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 10px;
+            font-family: var(--hrms-font-head);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+            border: 1.5px solid var(--hrms-border);
+            color: var(--hrms-text-secondary);
+
+            &:hover {
+                background: #F8F9FF;
+            }
+        }
+
+        .ep-modal-save {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 10px;
+            font-family: var(--hrms-font-head);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: linear-gradient(135deg, var(--hrms-primary), var(--hrms-primary-dark));
+            color: white;
+            border: none;
+
+            &:hover:not(:disabled) {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(90, 103, 242, 0.4);
+            }
+
+            &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+        }
+    }
+}
+
+.ep-modal-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: rgba(59, 130, 246, 0.08);
+    border-radius: 10px;
+    border-left: 3px solid var(--hrms-info);
+    margin-bottom: 20px;
+
+    svg {
+        color: var(--hrms-info);
+        font-size: 0.9rem;
+        margin-top: 2px;
+    }
+
+    p {
+        font-size: 0.75rem;
+        color: var(--hrms-text-secondary);
+        line-height: 1.4;
+    }
+}
+
+.ep-password-field {
+    margin-bottom: 16px;
+
+    label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--hrms-text-primary);
+        margin-bottom: 6px;
+    }
+
+    .ep-password-input-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        input {
+            width: 100%;
+            padding: 10px 40px 10px 14px;
+            border: 1.5px solid var(--hrms-border);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-family: var(--hrms-font-body);
+            background: #FAFBFF;
+            transition: all 0.2s;
+
+            &:focus {
+                outline: none;
+                border-color: var(--hrms-primary);
+                box-shadow: 0 0 0 3px var(--hrms-primary-glow);
+                background: #fff;
+            }
+
+            &.error {
+                border-color: var(--hrms-danger);
+                box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+            }
+        }
+
+        .ep-password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--hrms-text-muted);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 0.9rem;
+
+            &:hover {
+                color: var(--hrms-text-primary);
+            }
+        }
+    }
+
+    .ep-password-error {
+        display: block;
+        font-size: 0.7rem;
+        color: var(--hrms-danger);
+        margin-top: 4px;
+    }
+}
+
+.ep-password-requirements {
+    margin-top: 16px;
+    padding: 12px;
+    background: #F8F9FF;
+    border-radius: 10px;
+
+    p {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--hrms-text-secondary);
+        margin-bottom: 6px;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+            font-size: 0.7rem;
+            color: var(--hrms-text-muted);
+            padding: 2px 0;
+            padding-left: 16px;
+            position: relative;
+
+            &::before {
+                content: '•';
+                position: absolute;
+                left: 0;
+                color: var(--hrms-primary);
+            }
+        }
+    }
+}
+
+.spinning {
+    animation: ep-spin 0.6s linear infinite;
+}
+
+@keyframes ep-modal-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+// ========== RESPONSIVE ==========
+@media (max-width: 768px) {
+    .ep-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+
+        .ep-header-actions {
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .ep-edit-trigger,
+        .ep-password-trigger {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    .ep-password-modal {
+        width: 95%;
+        margin: 16px;
+    }
+
+    .ep-modal-footer {
+        flex-direction: column;
     }
 }
