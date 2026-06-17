@@ -35,7 +35,7 @@ const AdminLeave = () => {
   // ========== MONTH/YEAR FILTER STATES ==========
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  
+
   // Years array for dropdown
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
@@ -173,9 +173,9 @@ const AdminLeave = () => {
     }
   };
 
-  const handlePageChange = (newPage) => { 
-    setHistoryPage(newPage); 
-    fetchAllHistory(newPage); 
+  const handlePageChange = (newPage) => {
+    setHistoryPage(newPage);
+    fetchAllHistory(newPage);
   };
 
   const getStatusBadge = (status) => {
@@ -308,7 +308,7 @@ const AdminLeave = () => {
       {activeTab === 'history' && (
         <div className="admin-history-card">
           <h2>Complete Leave History</h2>
-          
+
           {/* Filters */}
           <div className="filters">
             <div className="search-box">
@@ -386,7 +386,7 @@ const AdminLeave = () => {
                         <td>
                           <div className="employee-cell">
                             <div className="employee-avatar">{leave.employeeName?.charAt(0).toUpperCase()}</div>
-                            <div><span>{leave.employeeName}</span><small>{leave.employeeId}</small></div>
+                            <div><span>{leave.employeeName}</span></div>
                           </div>
                         </td>
                         <td><span className={`role-badge ${getRoleBadge(leave.role)}`}>{leave.role}</span></td>
@@ -400,21 +400,35 @@ const AdminLeave = () => {
                         <td><span className={`status-badge ${getStatusBadge(leave.status)}`}>{getStatusText(leave.status)}</span></td>
                         <td>{leave.approvedByName || '—'}</td>
                         <td>
-                          {leave.status !== 'CANCELLED' && leave.status !== 'PENDING' && (
-                            <div className="override-buttons">
-                              <button className="override-approve" onClick={() => openOverrideModal(leave._id, 'APPROVED')} disabled={processingId === leave._id}>
-                                Override Approve
+                          {/* For PENDING - show Approve/Reject buttons */}
+                          {leave.status === 'PENDING' && (
+                            <div className="action-buttons-small">
+                              <button className="approve-small" onClick={() => handleApprove(leave._id)} disabled={processingId === leave._id}>
+                                Approve
                               </button>
-                              <button className="override-reject" onClick={() => openOverrideModal(leave._id, 'REJECTED')} disabled={processingId === leave._id}>
-                                Override Reject
+                              <button className="reject-small" onClick={() => openRejectModal(leave._id)} disabled={processingId === leave._id}>
+                                Reject
                               </button>
                             </div>
                           )}
-                          {leave.status === 'PENDING' && (
-                            <div className="action-buttons-small">
-                              <button className="approve-small" onClick={() => handleApprove(leave._id)} disabled={processingId === leave._id}>Approve</button>
-                              <button className="reject-small" onClick={() => openRejectModal(leave._id)} disabled={processingId === leave._id}>Reject</button>
-                            </div>
+
+                          {/* For APPROVED - show ONLY Override Reject */}
+                          {leave.status === 'APPROVED' && (
+                            <button className="override-reject" onClick={() => openOverrideModal(leave._id, 'REJECTED')} disabled={processingId === leave._id}>
+                              Override Reject
+                            </button>
+                          )}
+
+                          {/* For REJECTED - show ONLY Override Approve */}
+                          {leave.status === 'REJECTED' && (
+                            <button className="override-approve" onClick={() => openOverrideModal(leave._id, 'APPROVED')} disabled={processingId === leave._id}>
+                              Override Approve
+                            </button>
+                          )}
+
+                          {/* For CANCELLED - show nothing */}
+                          {leave.status === 'CANCELLED' && (
+                            <span className="no-action">—</span>
                           )}
                         </td>
                       </tr>

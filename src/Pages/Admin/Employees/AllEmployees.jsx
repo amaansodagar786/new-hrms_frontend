@@ -555,7 +555,7 @@ const AllEmployees = () => {
                                 <thead>
                                     <tr>
                                         <th>Employee</th>
-                                        <th>Employee ID</th>
+                                        {/* <th>Employee ID</th> */}
                                         <th>Role</th>
                                         <th>Department</th>
                                         <th>Designation</th>
@@ -576,7 +576,7 @@ const AllEmployees = () => {
                                                     <div className="employee-email">{emp.email}</div>
                                                 </div>
                                             </td>
-                                            <td className="employee-id">{emp.employeeId}</td>
+                                            {/* <td className="employee-id">{emp.employeeId}</td> */}
                                             <td>{getRoleBadge(emp.role)}</td>
                                             <td>{emp.department || '—'}</td>
                                             <td>{emp.designation || '—'}</td>

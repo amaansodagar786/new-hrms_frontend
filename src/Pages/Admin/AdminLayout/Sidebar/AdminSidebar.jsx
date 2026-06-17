@@ -51,14 +51,8 @@ const AdminSidebar = ({ sidebarOpen, toggleSidebar, handleLogout }) => {
         },
         { path: '/admin/employees', name: 'Employees', icon: <FaUserTie /> },
         { path: '/admin/attendance', name: 'Attendance', icon: <FaCalendarAlt /> },
-        {
-            key: 'leave',
-            name: 'Leave Management',
-            icon: <FaLeaf />,
-            children: [
-                { path: '/admin/leave', name: 'All Leave Requests', icon: <FaListUl /> },
-            ],
-        },
+        { path: '/admin/leave', name: 'Leave Management', icon: <FaLeaf /> },
+
         // { path: '/admin/payroll', name: 'Payroll', icon: <FaMoneyBillWave /> },
         { path: '/admin/policies', name: 'Policies', icon: <FaCog /> },
         {

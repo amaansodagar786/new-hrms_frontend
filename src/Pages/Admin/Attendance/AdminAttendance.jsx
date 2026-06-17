@@ -329,7 +329,7 @@ const AdminAttendance = () => {
                                 <tr>
                                     <th>Date</th>
                                     <th>Employee</th>
-                                    <th>Employee ID</th>
+                                    {/* <th>Employee ID</th> */}
                                     <th>Role</th>
                                     <th>Check In</th>
                                     <th>Check Out</th>
@@ -355,7 +355,7 @@ const AdminAttendance = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{record.employeeId}</td>
+                                        {/* <td>{record.employeeId}</td> */}
                                         <td>
                                             <span className={`role-badge ${getRoleBadgeClass(record.role)}`}>
                                                 {record.role || 'EMPLOYEE'}
