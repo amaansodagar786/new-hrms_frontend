@@ -75,7 +75,7 @@ const ManagerSidebar = ({ sidebarOpen, toggleSidebar, handleLogout, userName, us
             name: 'Tasks',
             icon: <FaTasks />,
         },
-       
+
 
 
         {
@@ -90,7 +90,6 @@ const ManagerSidebar = ({ sidebarOpen, toggleSidebar, handleLogout, userName, us
         },
 
         { path: '/manager/announcements', name: 'Announcements', icon: <FaBullhorn /> },
-        { path: '/manager/salary', name: 'Salary', icon: <FaMoneyBillWave /> },
 
     ];
 

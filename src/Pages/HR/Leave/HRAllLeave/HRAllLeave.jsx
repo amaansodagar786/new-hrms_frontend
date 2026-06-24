@@ -23,7 +23,11 @@ const HRAllLeave = () => {
   const [pendingLeaves, setPendingLeaves] = useState([]);
   const [allHistory, setAllHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [processingId, setProcessingId] = useState(null);
+
+  // ========== SEPARATE LOADING STATES ==========
+  const [approveLoading, setApproveLoading] = useState(null); // Stores leaveId being approved
+  const [rejectLoading, setRejectLoading] = useState(null); // Stores leaveId being rejected
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
@@ -34,7 +38,7 @@ const HRAllLeave = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectLeaveId, setRejectLeaveId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
-  const [rejectLoading, setRejectLoading] = useState(false);
+  const [rejectModalLoading, setRejectModalLoading] = useState(false);
   const [rejectType, setRejectType] = useState('reject');
   const [overrideStatus, setOverrideStatus] = useState('');
 
@@ -45,6 +49,9 @@ const HRAllLeave = () => {
   // Years array for dropdown
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+
+  // Get user role from localStorage
+  const userRole = localStorage.getItem('userRole');
 
   const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -77,10 +84,11 @@ const HRAllLeave = () => {
       setLoading(false);
     };
     loadData();
-  }, [selectedMonth, selectedYear, selectedStatus, selectedRole, historyPage]); // ← Add dependencies
+  }, [selectedMonth, selectedYear, selectedStatus, selectedRole, historyPage]);
 
+  // ========== HANDLE APPROVE ==========
   const handleApprove = async (leaveId) => {
-    setProcessingId(leaveId);
+    setApproveLoading(leaveId); // ✅ Only this button shows spinner
     try {
       const response = await axios.put(`${apiUrl}/leave/${leaveId}/approve`, {}, { withCredentials: true });
       if (response.data.success) {
@@ -88,10 +96,15 @@ const HRAllLeave = () => {
         await fetchPendingLeaves();
         await fetchAllHistory(historyPage);
       }
-    } catch (error) { toast.error(error.response?.data?.message || 'Failed to approve leave'); }
-    finally { setProcessingId(null); }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to approve leave');
+    }
+    finally {
+      setApproveLoading(null);
+    }
   };
 
+  // ========== HANDLE REJECT (Modal) ==========
   const openRejectModal = (leaveId) => {
     setRejectLeaveId(leaveId);
     setRejectionReason('');
@@ -111,18 +124,19 @@ const HRAllLeave = () => {
     setShowRejectModal(false);
     setRejectLeaveId(null);
     setRejectionReason('');
-    setRejectLoading(false);
+    setRejectModalLoading(false);
     setRejectType('reject');
     setOverrideStatus('');
   };
 
+  // ========== HANDLE CONFIRM ACTION (Reject/Override) ==========
   const handleConfirmAction = async () => {
     if (!rejectionReason.trim()) {
       toast.error('Please provide a reason');
       return;
     }
 
-    setRejectLoading(true);
+    setRejectModalLoading(true);
     try {
       let response;
 
@@ -146,7 +160,7 @@ const HRAllLeave = () => {
     } catch (error) {
       toast.error(error.response?.data?.message || 'Action failed');
     } finally {
-      setRejectLoading(false);
+      setRejectModalLoading(false);
     }
   };
 
@@ -177,6 +191,9 @@ const HRAllLeave = () => {
     return matchesSearch && matchesStatus && matchesRole;
   });
 
+  // Check if user is ADMIN
+  const isAdmin = userRole === 'ADMIN';
+
   if (loading) {
     return (<div className="hr-all-leave-loading"><div className="spinner"></div><p>Loading leave data...</p></div>);
   }
@@ -186,7 +203,7 @@ const HRAllLeave = () => {
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
       <div className="all-leave-header">
         <h1><FaUserTie /> HR - All Leave Management</h1>
-        <p>View, approve, reject, and override all leave requests across the organization</p>
+        <p>View, approve, reject all leave requests across the organization</p>
       </div>
       <div className="all-leave-tabs">
         <button className={`tab-btn ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>
@@ -228,11 +245,19 @@ const HRAllLeave = () => {
                       <td>{new Date(leave.appliedOn).toLocaleDateString()}</td>
                       <td>
                         <div className="action-buttons">
-                          <button className="approve-btn" onClick={() => handleApprove(leave._id)} disabled={processingId === leave._id}>
-                            {processingId === leave._id ? <FaSpinner className="spinning" /> : <FaCheckCircle />} Approve
+                          <button
+                            className="approve-btn"
+                            onClick={() => handleApprove(leave._id)}
+                            disabled={approveLoading === leave._id || rejectLoading === leave._id}
+                          >
+                            {approveLoading === leave._id ? <FaSpinner className="spinning" /> : <FaCheckCircle />} Approve
                           </button>
-                          <button className="reject-btn" onClick={() => openRejectModal(leave._id)} disabled={processingId === leave._id}>
-                            {processingId === leave._id ? <FaSpinner className="spinning" /> : <FaTimesCircle />} Reject
+                          <button
+                            className="reject-btn"
+                            onClick={() => openRejectModal(leave._id)}
+                            disabled={approveLoading === leave._id || rejectLoading === leave._id}
+                          >
+                            {rejectLoading === leave._id ? <FaSpinner className="spinning" /> : <FaTimesCircle />} Reject
                           </button>
                         </div>
                       </td>
@@ -338,21 +363,58 @@ const HRAllLeave = () => {
                         <td><span className={`status-badge ${getStatusBadge(leave.status)}`}>{getStatusText(leave.status)}</span></td>
                         <td>{leave.approvedByName || '—'}</td>
                         <td>
+                          {/* PENDING - Show Approve/Reject */}
                           {leave.status === 'PENDING' && (
                             <div className="action-buttons-small">
-                              <button className="approve-small" onClick={() => handleApprove(leave._id)} disabled={processingId === leave._id}>Approve</button>
-                              <button className="reject-small" onClick={() => openRejectModal(leave._id)} disabled={processingId === leave._id}>Reject</button>
+                              <button
+                                className="approve-small"
+                                onClick={() => handleApprove(leave._id)}
+                                disabled={approveLoading === leave._id || rejectLoading === leave._id}
+                              >
+                                {approveLoading === leave._id ? <FaSpinner className="spinning" /> : 'Approve'}
+                              </button>
+                              <button
+                                className="reject-small"
+                                onClick={() => openRejectModal(leave._id)}
+                                disabled={approveLoading === leave._id || rejectLoading === leave._id}
+                              >
+                                {rejectLoading === leave._id ? <FaSpinner className="spinning" /> : 'Reject'}
+                              </button>
                             </div>
                           )}
-                          {leave.status !== 'PENDING' && leave.status !== 'CANCELLED' && (
+
+                          {/* ✅ ONLY ADMIN CAN OVERRIDE */}
+                          {leave.status !== 'PENDING' && leave.status !== 'CANCELLED' && isAdmin && (
                             <div className="override-buttons">
-                              <button className="override-approve" onClick={() => openOverrideModal(leave._id, 'APPROVED')} disabled={processingId === leave._id}>
-                                Override Approve
-                              </button>
-                              <button className="override-reject" onClick={() => openOverrideModal(leave._id, 'REJECTED')} disabled={processingId === leave._id}>
-                                Override Reject
-                              </button>
+                              {leave.status !== 'APPROVED' && (
+                                <button
+                                  className="override-approve"
+                                  onClick={() => openOverrideModal(leave._id, 'APPROVED')}
+                                  disabled={approveLoading === leave._id || rejectLoading === leave._id}
+                                >
+                                  Override Approve
+                                </button>
+                              )}
+                              {leave.status !== 'REJECTED' && (
+                                <button
+                                  className="override-reject"
+                                  onClick={() => openOverrideModal(leave._id, 'REJECTED')}
+                                  disabled={approveLoading === leave._id || rejectLoading === leave._id}
+                                >
+                                  Override Reject
+                                </button>
+                              )}
                             </div>
+                          )}
+
+                          {/* APPROVED/REJECTED but NOT ADMIN - Show nothing or status */}
+                          {leave.status !== 'PENDING' && leave.status !== 'CANCELLED' && !isAdmin && (
+                            <span className="no-action">—</span>
+                          )}
+
+                          {/* CANCELLED - Show nothing */}
+                          {leave.status === 'CANCELLED' && (
+                            <span className="no-action">—</span>
                           )}
                         </td>
                       </tr>
@@ -402,9 +464,9 @@ const HRAllLeave = () => {
               <button className="hal-modal__cancel" onClick={closeModal}>
                 Cancel
               </button>
-              <button className="hal-modal__confirm" onClick={handleConfirmAction} disabled={rejectLoading}>
-                {rejectLoading ? <FaSpinner className="spinning" /> : <FaTimesCircle />}
-                {rejectLoading ? 'Processing...' : (rejectType === 'reject' ? 'Reject Leave' : `Override to ${overrideStatus}`)}
+              <button className="hal-modal__confirm" onClick={handleConfirmAction} disabled={rejectModalLoading}>
+                {rejectModalLoading ? <FaSpinner className="spinning" /> : <FaTimesCircle />}
+                {rejectModalLoading ? 'Processing...' : (rejectType === 'reject' ? 'Reject Leave' : `Override to ${overrideStatus}`)}
               </button>
             </div>
           </div>

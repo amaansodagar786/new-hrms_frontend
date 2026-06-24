@@ -1,22 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
-// ─── Tokens ───────────────────────────────────────────────────────────
 :root {
-    --es-primary: #10B981;
-    --es-primary-dark: #059669;
-    --es-primary-glow: rgba(16, 185, 129, 0.18);
-    --es-accent: #34D399;
-    --es-dark: #0D1A14;
-    --es-dark-2: #13261D;
-    --es-dark-3: #1C3328;
-    --es-text-white: #ffffff;
-    --es-text-muted: rgba(255, 255, 255, 0.45);
-    --es-text-soft: rgba(255, 255, 255, 0.7);
+    --es-primary: #5A67F2;
+    --es-primary-dark: #3D4ADB;
+    --es-primary-glow: rgba(90, 103, 242, 0.18);
+    --es-accent: #00D2C8;
+    --es-dark: #0D0F1A;
+    --es-dark-2: #13162B;
     --es-border-dark: rgba(255, 255, 255, 0.07);
+    --es-text-white: #ffffff;
+    --es-text-muted-light: rgba(255, 255, 255, 0.45);
+    --es-text-soft: rgba(255, 255, 255, 0.7);
     --es-font-head: 'Sora', sans-serif;
     --es-font-body: 'DM Sans', sans-serif;
 
-    // Sidebar dimensions
     --es-width-open: 260px;
     --es-width-closed: 72px;
     --es-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -27,7 +24,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(13, 26, 20, 0.55);
+    background: rgba(13, 15, 26, 0.55);
     backdrop-filter: blur(2px);
     z-index: 99;
 }
@@ -41,7 +38,7 @@
     z-index: 100;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(180deg, #13261D 0%, #0D1A14 100%);
+    background: linear-gradient(180deg, #13162B 0%, #0D0F1A 100%);
     border-right: 1px solid var(--es-border-dark);
     font-family: var(--es-font-body);
     transition: width var(--es-transition);
@@ -66,6 +63,12 @@
     border-bottom: 1px solid var(--es-border-dark);
     min-height: 72px;
     flex-shrink: 0;
+
+    // When closed — center the hamburger
+    .es-sidebar--closed & {
+        justify-content: center;
+        padding: 20px 0;
+    }
 }
 
 // ─── Brand ────────────────────────────────────────────────────────────
@@ -107,7 +110,7 @@
 
     &__sub {
         font-size: 0.68rem;
-        color: var(--es-text-muted);
+        color: var(--es-text-muted-light);
         font-weight: 400;
         letter-spacing: 0.04em;
         white-space: nowrap;
@@ -132,44 +135,18 @@
 
     &:hover {
         background: var(--es-primary-glow);
-        border-color: rgba(16, 185, 129, 0.3);
+        border-color: rgba(90, 103, 242, 0.3);
         color: var(--es-text-white);
     }
-}
 
-// ─── Closed state ─────────────────────────────────────────────────────
-.es-sidebar--closed {
-    .es-header {
-        justify-content: center;
-        padding: 20px 0;
-    }
-
-    .es-nav-label {
-        display: none;
-    }
-
-    .es-nav__item {
-        justify-content: center;
-        padding: 0;
-        height: 48px;
-        margin: 2px 10px;
-        border-radius: 12px;
-    }
-
-    .es-footer {
-        padding: 16px 0;
-        flex-direction: column;
-        align-items: center;
-        gap: 0;
-        border-top: 1px solid var(--es-border-dark);
-    }
-
-    .es-logout {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        justify-content: center;
-        padding: 0;
+    // Hamburger alone when closed — slightly bigger, no border
+    &--alone {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.06);
+        font-size: 0.9rem;
     }
 }
 
@@ -179,10 +156,11 @@
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--es-text-muted);
+    color: var(--es-text-muted-light);
     padding: 20px 20px 8px;
     white-space: nowrap;
     animation: es-fade-in 0.2s ease both;
+    flex-shrink: 0;
 }
 
 // ─── Navigation ───────────────────────────────────────────────────────
@@ -222,10 +200,18 @@
     color: var(--es-text-soft);
     font-size: 0.875rem;
     font-weight: 500;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition: background 0.2s, color 0.2s;
     overflow: hidden;
     white-space: nowrap;
 
+    // Closed state — icon only centered
+    .es-sidebar--closed & {
+        justify-content: center;
+        padding: 0;
+        margin: 2px 10px;
+    }
+
+    // Hover — non-active
     &:hover:not(.es-nav__item--active) {
         background: rgba(255, 255, 255, 0.06);
         color: var(--es-text-white);
@@ -240,14 +226,14 @@
         }
     }
 
-    // ── Active ────────────────────────────────────────────────────────
+    // ── ACTIVE ────────────────────────────────────────────────────────
     &--active {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(16, 185, 129, 0.10) 100%);
+        background: linear-gradient(135deg, rgba(90, 103, 242, 0.22) 0%, rgba(90, 103, 242, 0.10) 100%);
         color: var(--es-text-white);
 
         .es-nav__icon {
             color: var(--es-primary);
-            filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.6));
+            filter: drop-shadow(0 0 6px rgba(90, 103, 242, 0.6));
         }
 
         .es-nav__text {
@@ -271,7 +257,7 @@
 .es-nav__icon {
     font-size: 1rem;
     flex-shrink: 0;
-    color: var(--es-text-muted);
+    color: var(--es-text-muted-light);
     transition: color 0.2s, filter 0.2s;
     display: flex;
     align-items: center;
@@ -314,6 +300,12 @@
     align-items: center;
     gap: 10px;
     flex-shrink: 0;
+
+    .es-sidebar--closed & {
+        padding: 16px 0;
+        justify-content: center;
+        flex-direction: column;
+    }
 }
 
 .es-footer__profile {
@@ -351,11 +343,13 @@
     font-weight: 600;
     color: var(--es-text-white);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .es-footer__role {
     font-size: 0.68rem;
-    color: var(--es-text-muted);
+    color: var(--es-text-muted-light);
     white-space: nowrap;
 }
 
@@ -377,12 +371,6 @@
     flex-shrink: 0;
     transition: background 0.2s, color 0.2s, border-color 0.2s;
 
-    &:hover {
-        background: rgba(239, 68, 68, 0.15);
-        color: #EF4444;
-        border-color: rgba(239, 68, 68, 0.4);
-    }
-
     svg {
         font-size: 0.85rem;
         flex-shrink: 0;
@@ -390,6 +378,21 @@
 
     span {
         animation: es-fade-in 0.2s ease both;
+    }
+
+    &:hover {
+        background: rgba(239, 68, 68, 0.15);
+        color: #EF4444;
+        border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    // Closed — icon only
+    .es-sidebar--closed & {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        justify-content: center;
+        padding: 0;
     }
 }
 
@@ -432,28 +435,26 @@
         }
     }
 
-    .es-sidebar--closed {
+    // When open on mobile — restore normal layout
+    .es-sidebar--open {
         .es-header {
-            padding: 20px 16px;
             justify-content: space-between;
+            padding: 20px 16px;
         }
 
         .es-nav__item {
             justify-content: flex-start;
             padding: 0 16px;
-            margin: 2px 10px;
         }
 
         .es-footer {
             padding: 16px 12px;
             flex-direction: row;
-            align-items: center;
         }
 
         .es-logout {
             width: auto;
             height: auto;
-            border-radius: 10px;
             padding: 8px 12px;
         }
     }

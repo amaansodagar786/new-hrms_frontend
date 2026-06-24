@@ -66,6 +66,81 @@
     border-bottom: 1px solid var(--hrms-border-dark);
     min-height: 72px;
     flex-shrink: 0;
+
+    // When closed — center the hamburger
+    .as-sidebar--closed & {
+        justify-content: center;
+        padding: 20px 0;
+    }
+}
+
+// ─── Toggle Button ────────────────────────────────────────────────────
+.as-toggle {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--hrms-border-dark);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--hrms-text-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+
+    &:hover {
+        background: var(--hrms-primary-glow);
+        border-color: rgba(90, 103, 242, 0.3);
+        color: var(--hrms-text-white);
+    }
+
+    // Hamburger alone when closed — slightly bigger
+    &--alone {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.06);
+        font-size: 0.9rem;
+    }
+}
+
+// ─── Closed state — center the toggle ─────────────────────────────────
+.as-sidebar--closed {
+    .as-header {
+        justify-content: center;
+        padding: 20px 0;
+    }
+
+    .as-nav-label {
+        display: none;
+    }
+
+    .as-nav__item {
+        justify-content: center;
+        padding: 0;
+        height: 48px;
+        margin: 2px 10px;
+        border-radius: 12px;
+    }
+
+    .as-footer {
+        padding: 16px 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        border-top: 1px solid var(--hrms-border-dark);
+    }
+
+    .as-logout {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        justify-content: center;
+        padding: 0;
+    }
 }
 
 // ─── Brand ────────────────────────────────────────────────────────────

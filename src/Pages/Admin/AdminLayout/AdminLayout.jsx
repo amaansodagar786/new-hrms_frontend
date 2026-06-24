@@ -72,51 +72,65 @@ const AdminLayout = () => {
 
     if (loading) {
         return (
-            <div className="auth-loading">
-                <div className="spinner"></div>
+            <div className="adm-loading">
+                <div className="adm-spinner" />
                 <p>Loading...</p>
             </div>
         );
     }
 
     return (
-        <div className="admin-layout">
+        <div className="adm-layout">
             <AdminSidebar
                 sidebarOpen={sidebarOpen}
                 toggleSidebar={toggleSidebar}
                 handleLogout={handleLogout}
             />
 
-            <main className={`admin-main ${sidebarOpen ? 'shifted' : 'full'}`}>
-                <header className="main-header">
-                    <div className="header-left">
-                        <button className="mobile-toggle" onClick={toggleSidebar}>
+            <main className={`adm-main ${sidebarOpen ? 'adm-main--shifted' : 'adm-main--full'}`}>
+
+                {/* Top Header */}
+                <header className="adm-topbar">
+                    <div className="adm-topbar__left">
+                        {/* Mobile hamburger */}
+                        <button className="adm-mobile-toggle" onClick={toggleSidebar}>
                             <FaBars />
                         </button>
-                        <h1>Dashboard</h1>
+                        <div className="adm-topbar__title">
+                            <span className="adm-topbar__badge">Admin Portal</span>
+                        </div>
                     </div>
-                    <div className="header-right">
+
+                    <div className="adm-topbar__right">
                         {/* Notification Bell with Unread Count */}
                         <button
-                            className="notification-btn"
+                            className="adm-notif"
                             onClick={() => navigate('/admin/announcements')}
                         >
                             <FaBell />
                             {unreadCount > 0 && (
-                                <span className="notification-badge">{unreadCount}</span>
+                                <span className="adm-notif__dot">{unreadCount}</span>
                             )}
                         </button>
-                        <div className="admin-profile">
-                            <div className="profile-avatar">
+
+                        {/* Profile chip */}
+                        <div className="adm-profile">
+                            <div className="adm-profile__avatar">
                                 {adminName?.charAt(0).toUpperCase()}
                             </div>
-                            <span className="profile-name">{adminName}</span>
+                            <div className="adm-profile__info">
+                                <span className="adm-profile__name">{adminName}</span>
+                                <span className="adm-profile__role">Admin</span>
+                            </div>
                         </div>
                     </div>
                 </header>
-                <div className="main-content">
+
+                {/* Page Content */}
+                <div className="adm-content">
                     <Outlet />
                 </div>
+
             </main>
         </div>
     );

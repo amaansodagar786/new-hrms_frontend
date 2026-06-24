@@ -31,7 +31,13 @@ const AdminSidebar = ({ sidebarOpen, toggleSidebar, handleLogout }) => {
     });
 
     const toggleSubmenu = (key) => {
-        setOpenSubmenu(prev => prev === key ? null : key);
+        if (!sidebarOpen) {
+            // If sidebar is closed, open it first
+            toggleSidebar();
+            setOpenSubmenu(key);
+        } else {
+            setOpenSubmenu(prev => prev === key ? null : key);
+        }
     };
 
     const menuItems = [
@@ -52,8 +58,6 @@ const AdminSidebar = ({ sidebarOpen, toggleSidebar, handleLogout }) => {
         { path: '/admin/employees', name: 'Employees', icon: <FaUserTie /> },
         { path: '/admin/attendance', name: 'Attendance', icon: <FaCalendarAlt /> },
         { path: '/admin/leave', name: 'Leave Management', icon: <FaLeaf /> },
-
-        // { path: '/admin/payroll', name: 'Payroll', icon: <FaMoneyBillWave /> },
         { path: '/admin/policies', name: 'Policies', icon: <FaCog /> },
         {
             path: '/admin/overview',
@@ -76,30 +80,37 @@ const AdminSidebar = ({ sidebarOpen, toggleSidebar, handleLogout }) => {
 
                 {/* Header */}
                 <div className="as-header">
-                    <div className="as-brand">
-                        <div className="as-brand__icon">
-                            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect width="40" height="40" rx="12" fill="url(#sb-grad)" />
-                                <path d="M20 10L30 15.5V25L20 30.5L10 25V15.5L20 10Z" stroke="white" strokeWidth="1.8" fill="none" />
-                                <circle cx="20" cy="20" r="3.5" fill="white" />
-                                <defs>
-                                    <linearGradient id="sb-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                                        <stop stopColor="#5A67F2" />
-                                        <stop offset="1" stopColor="#3D4ADB" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                        </div>
-                        {sidebarOpen && (
-                            <div className="as-brand__text">
-                                <span className="as-brand__name">HRMS</span>
-                                <span className="as-brand__sub">Admin Portal</span>
+                    {sidebarOpen ? (
+                        <>
+                            <div className="as-brand">
+                                <div className="as-brand__icon">
+                                    <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect width="40" height="40" rx="12" fill="url(#sb-grad)" />
+                                        <path d="M20 10L30 15.5V25L20 30.5L10 25V15.5L20 10Z" stroke="white" strokeWidth="1.8" fill="none" />
+                                        <circle cx="20" cy="20" r="3.5" fill="white" />
+                                        <defs>
+                                            <linearGradient id="sb-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                                                <stop stopColor="#5A67F2" />
+                                                <stop offset="1" stopColor="#3D4ADB" />
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                </div>
+                                <div className="as-brand__text">
+                                    <span className="as-brand__name">HRMS</span>
+                                    <span className="as-brand__sub">Admin Portal</span>
+                                </div>
                             </div>
-                        )}
-                    </div>
-                    <button className="as-toggle" onClick={toggleSidebar} title={sidebarOpen ? 'Collapse' : 'Expand'}>
-                        {sidebarOpen ? <FaTimes /> : <FaBars />}
-                    </button>
+                            <button className="as-toggle" onClick={toggleSidebar} title="Collapse">
+                                <FaTimes />
+                            </button>
+                        </>
+                    ) : (
+                        /* Closed — hamburger only, centered */
+                        <button className="as-toggle as-toggle--alone" onClick={toggleSidebar} title="Expand">
+                            <FaBars />
+                        </button>
+                    )}
                 </div>
 
                 {/* Nav Label */}
@@ -119,10 +130,7 @@ const AdminSidebar = ({ sidebarOpen, toggleSidebar, handleLogout }) => {
                                     {/* Parent trigger */}
                                     <button
                                         className={`as-nav__item as-nav__item--parent ${isActive ? 'as-nav__item--active' : ''}`}
-                                        onClick={() => {
-                                            if (!sidebarOpen) toggleSidebar(); // expand sidebar first on collapsed
-                                            toggleSubmenu(item.key);
-                                        }}
+                                        onClick={() => toggleSubmenu(item.key)}
                                         title={!sidebarOpen ? item.name : ''}
                                     >
                                         <span className="as-nav__icon">{item.icon}</span>
